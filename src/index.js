@@ -219,8 +219,8 @@ const DEFAULT_CONTENT = {
   general: {
     studioName: "Imagix Photography",
     tagline: "Fine Art Wedding & Portrait Studio",
-    phone: "+91 90470 55747",
-    whatsappNumber: "+919047055747",
+    phone: "+91 79041 40477",
+    whatsappNumber: "+917904140477",
     email: "studio@imagix.in",
     address: "42 Heritage Lane, Race Course, Coimbatore, Tamil Nadu 641018",
     instagramUrl: "https://instagram.com",
@@ -481,7 +481,7 @@ const handleApi = async (request, env, url) => {
   // 1. Config
   if (path === "/api/config" && request.method === "GET") {
     const content = await getContent(env);
-    return json({ categories: CATEGORIES, whatsappNumber: content?.general?.whatsappNumber || env?.WHATSAPP_NUMBER || "+919047055747" }, 200, headers);
+    return json({ categories: CATEGORIES, whatsappNumber: content?.general?.whatsappNumber || env?.WHATSAPP_NUMBER || "+917904140477" }, 200, headers);
   }
 
   // 2. Auth Login
@@ -717,7 +717,7 @@ const handleApi = async (request, env, url) => {
     const settings = {
       ADMIN_PASSWORD: storedSettings.ADMIN_PASSWORD || env?.ADMIN_PASSWORD || "admin",
       JWT_SECRET: storedSettings.JWT_SECRET || env?.JWT_SECRET || "",
-      WHATSAPP_NUMBER: storedSettings.WHATSAPP_NUMBER || env?.WHATSAPP_NUMBER || "+919047055747",
+      WHATSAPP_NUMBER: storedSettings.WHATSAPP_NUMBER || env?.WHATSAPP_NUMBER || "+917904140477",
       CLOUDFLARE_ACCOUNT_ID: storedSettings.CLOUDFLARE_ACCOUNT_ID || env?.CLOUDFLARE_ACCOUNT_ID || "",
       CLOUDFLARE_API_TOKEN: storedSettings.CLOUDFLARE_API_TOKEN || env?.CLOUDFLARE_API_TOKEN || "",
       R2_BUCKET_NAME: storedSettings.R2_BUCKET_NAME || env?.R2_BUCKET_NAME || "imagix-photography-images",

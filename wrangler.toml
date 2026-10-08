@@ -8,7 +8,7 @@ binding = "ASSETS"
 run_worker_first = ["/api/*", "/media/*"]
 
 [vars]
-WHATSAPP_NUMBER = "+919047055747"
+WHATSAPP_NUMBER = "+917904140477"
 ALLOWED_ORIGIN = "*"
 
 # -----------------------------------------------------------------------------

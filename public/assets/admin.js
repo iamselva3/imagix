@@ -1596,7 +1596,7 @@ async function loadSettings() {
     setVal('set-cf-origin', s.ALLOWED_ORIGIN || '*');
     setVal('set-admin-pass', s.ADMIN_PASSWORD || 'admin');
     setVal('set-jwt-secret', s.JWT_SECRET);
-    setVal('set-whatsapp', s.WHATSAPP_NUMBER || '+919047055747');
+    setVal('set-whatsapp', s.WHATSAPP_NUMBER || '+917904140477');
 
     // Fetch storage for active bucket
     fetchBucketStorage(activeBucket);
@@ -1630,7 +1630,7 @@ async function saveSettings() {
       ALLOWED_ORIGIN: getVal('set-cf-origin') || '*',
       ADMIN_PASSWORD: getVal('set-admin-pass') || 'admin',
       JWT_SECRET: getVal('set-jwt-secret'),
-      WHATSAPP_NUMBER: getVal('set-whatsapp') || '+919047055747',
+      WHATSAPP_NUMBER: getVal('set-whatsapp') || '+917904140477',
     };
 
     const res = await api('/api/settings', {

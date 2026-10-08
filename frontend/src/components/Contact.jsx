@@ -16,7 +16,7 @@ export default function Contact({ content, general }) {
 
   const instagramUrl = general?.instagramUrl || 'https://www.instagram.com/imagixphotography_/';
   const email = general?.email || 'studio@imagix.in';
-  const phone = general?.phone || '+91 90470 55747';
+  const phone = general?.phone || '+91 79041 40477';
 
   async function handleSubmit(event) {
     event.preventDefault();

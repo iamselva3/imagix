@@ -22,7 +22,7 @@ function getDevVars() {
   const vars = {
     ADMIN_PASSWORD: 'admin',
     JWT_SECRET: '',
-    WHATSAPP_NUMBER: '+919047055747',
+    WHATSAPP_NUMBER: '+917904140477',
     CLOUDFLARE_ACCOUNT_ID: '',
     CLOUDFLARE_API_TOKEN: '',
     R2_BUCKET_NAME: 'imagix-photography-images',
@@ -801,7 +801,7 @@ function preserveExistingAdmin() {
           response.setHeader('Content-Type', 'application/json; charset=utf-8');
           return response.end(JSON.stringify({
             categories: ['Wedding', 'Pre-Wedding', 'Maternity', 'Baby & Kids', 'Events', 'Portrait & Model', 'Cinematography', 'Product'],
-            whatsappNumber: content?.general?.whatsappNumber || '+919047055747'
+            whatsappNumber: content?.general?.whatsappNumber || '+917904140477'
           }));
         }
 

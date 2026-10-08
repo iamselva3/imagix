@@ -72,6 +72,8 @@ html {
   scroll-behavior: auto; /* Managed by Lenis */
   scroll-padding-top: 80px;
   transition: background-color 0.35s ease, color 0.35s ease;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
 }
 
 body {
@@ -82,6 +84,23 @@ body {
   font-size: 14px;
   line-height: 1.6;
   transition: background-color 0.35s ease, color 0.35s ease;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Hide all scrollbars across desktop, tablet, and mobile */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 body.menu-is-open {

@@ -10,8 +10,8 @@ export const DEFAULT_CONTENT = {
   general: {
     studioName: 'Imagix Photography',
     tagline: 'Fine Art Wedding & Portrait Studio',
-    phone: '+91 90470 55747',
-    whatsappNumber: '+919047055747',
+    phone: '+91 79041 40477',
+    whatsappNumber: '+917904140477',
     email: 'studio@imagix.in',
     address: '42 Heritage Lane, Race Course, Coimbatore, Tamil Nadu 641018',
     instagramUrl: 'https://instagram.com',
