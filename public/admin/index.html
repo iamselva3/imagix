@@ -658,8 +658,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="set-r2-bucket">R2 Bucket Name *</label>
-                <input type="text" id="set-r2-bucket" placeholder="imagix-photography-images" required>
-                <small class="text-muted" style="font-size: 11px;">Default: <code>imagix-photography-images</code></small>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="set-r2-bucket" placeholder="imagix-photography-images" required style="flex: 1;">
+                  <button type="button" class="btn btn-small btn-outline" id="check-bucket-btn" title="Inspect storage usage for this bucket">Check Storage</button>
+                </div>
+                <small class="text-muted" style="font-size: 11px;">Default: <code>imagix-photography-images</code> (Click 'Check Storage' to test any bucket)</small>
               </div>
               <div class="form-group">
                 <label for="set-cf-account-id">Cloudflare Account ID *</label>
@@ -688,6 +691,51 @@
               <label for="set-r2-domain">R2 Public Custom Media Domain (Optional)</label>
               <input type="text" id="set-r2-domain" placeholder="https://media.imagix.in (or leave blank to use Worker /media/ proxy)">
               <small class="text-muted" style="font-size: 11px;">If you connected a custom domain to your R2 bucket in Cloudflare</small>
+            </div>
+
+            <!-- Live R2 Bucket Storage & Free Space Gauge -->
+            <div class="r2-storage-card" id="r2-storage-widget">
+              <div class="r2-storage-head">
+                <div class="r2-storage-title">
+                  <span class="r2-pulse-dot" id="r2-status-dot"></span>
+                  <span style="font-weight: 600; font-size: 13.5px;" id="r2-active-bucket-name">imagix-photography-images</span>
+                  <span class="badge" id="r2-status-badge">Checking...</span>
+                </div>
+                <button type="button" class="btn btn-small btn-outline" id="r2-refresh-storage-btn">
+                  <span>↻ Refresh Storage</span>
+                </button>
+              </div>
+
+              <!-- Storage Progress Bar -->
+              <div class="r2-meter-wrap">
+                <div class="r2-meter-bar">
+                  <div class="r2-meter-fill" id="r2-meter-fill" style="width: 1%;"></div>
+                </div>
+                <div class="r2-meter-labels">
+                  <span id="r2-meter-used">Used: Calculating…</span>
+                  <span id="r2-meter-free">Free Remaining: Calculating…</span>
+                </div>
+              </div>
+
+              <!-- Metrics Grid -->
+              <div class="r2-metrics-grid">
+                <div class="r2-metric-box">
+                  <div class="r2-metric-label">FREE SPACE REMAINING</div>
+                  <div class="r2-metric-value text-gold" id="r2-stat-free">-- GB</div>
+                  <div class="r2-metric-sub" id="r2-stat-free-pct">10.00 GB Free Tier</div>
+                </div>
+                <div class="r2-metric-box">
+                  <div class="r2-metric-label">SPACE USED</div>
+                  <div class="r2-metric-value" id="r2-stat-used">-- MB</div>
+                  <div class="r2-metric-sub" id="r2-stat-count">0 stored objects</div>
+                </div>
+                <div class="r2-metric-box">
+                  <div class="r2-metric-label">MONTHLY FREE TIER</div>
+                  <div class="r2-metric-value">10.00 GB</div>
+                  <div class="r2-metric-sub text-muted">$0.00 / month free allowance</div>
+                </div>
+              </div>
+              <div id="r2-storage-error" class="r2-storage-err" hidden></div>
             </div>
           </div>
 

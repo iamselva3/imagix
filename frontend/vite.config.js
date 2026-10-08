@@ -316,6 +316,109 @@ async function fetchFromR2FromVite({ key }) {
   return null;
 }
 
+async function getBucketStorageFromVite({ bucket }) {
+  const vars = getDevVars();
+  if (!vars.CLOUDFLARE_ACCOUNT_ID || !vars.R2_ACCESS_KEY_ID || !vars.R2_SECRET_ACCESS_KEY) {
+    return { error: 'Missing Cloudflare R2 credentials in .dev.vars' };
+  }
+
+  const accountId = vars.CLOUDFLARE_ACCOUNT_ID;
+  const accessKeyId = vars.R2_ACCESS_KEY_ID;
+  const secretAccessKey = vars.R2_SECRET_ACCESS_KEY;
+  const targetBucket = (bucket && bucket.trim()) || vars.R2_BUCKET_NAME || 'imagix-photography-images';
+
+  const host = `${accountId}.r2.cloudflarestorage.com`;
+  const canonicalQuery = 'list-type=2';
+  const endpoint = `https://${host}/${encodeURIComponent(targetBucket)}?${canonicalQuery}`;
+
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const dateStamp = amzDate.slice(0, 8);
+  const region = 'auto';
+  const service = 's3';
+
+  const emptyHash = sha256Hex('');
+  const canonicalUri = `/${encodeURIComponent(targetBucket)}`;
+
+  const canonicalHeaders =
+    `host:${host}\n` +
+    `x-amz-content-sha256:${emptyHash}\n` +
+    `x-amz-date:${amzDate}\n`;
+  const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+
+  const canonicalRequest =
+    `GET\n` +
+    `${canonicalUri}\n` +
+    `${canonicalQuery}\n` +
+    `${canonicalHeaders}\n` +
+    `${signedHeaders}\n` +
+    `${emptyHash}`;
+
+  const credentialScope = `${dateStamp}/${region}/${service}/aws4_request`;
+  const stringToSign =
+    `AWS4-HMAC-SHA256\n` +
+    `${amzDate}\n` +
+    `${credentialScope}\n` +
+    `${sha256Hex(canonicalRequest)}`;
+
+  const kDate = hmacSha256(`AWS4${secretAccessKey}`, dateStamp);
+  const kRegion = hmacSha256(kDate, region);
+  const kService = hmacSha256(kRegion, service);
+  const kSigning = hmacSha256(kService, 'aws4_request');
+  const signature = crypto.createHmac('sha256', kSigning).update(stringToSign).digest('hex');
+
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        Host: host,
+        'x-amz-date': amzDate,
+        'x-amz-content-sha256': emptyHash,
+        Authorization: authHeader,
+      },
+    });
+
+    if (!res.ok) {
+      return { error: `Bucket "${targetBucket}" not accessible (HTTP ${res.status})`, statusText: res.statusText };
+    }
+
+    const xml = await res.text();
+    const sizes = [...xml.matchAll(/<Size>(\d+)<\/Size>/g)].map(m => Number(m[1]));
+    const totalBytes = sizes.reduce((a, b) => a + b, 0);
+    const objectCount = sizes.length;
+    const freeTierBytes = 10 * 1024 * 1024 * 1024; // 10 GB Cloudflare Free Tier
+    const freeBytes = Math.max(0, freeTierBytes - totalBytes);
+
+    function formatBytes(b) {
+      if (b < 1024) return `${b} B`;
+      if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+      if (b < 1024 * 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+      return `${(b / (1024 * 1024 * 1024)).toFixed(3)} GB`;
+    }
+
+    const percentUsed = Math.min(100, (totalBytes / freeTierBytes) * 100);
+
+    return {
+      success: true,
+      bucket: targetBucket,
+      objectCount,
+      totalBytes,
+      usedFormatted: formatBytes(totalBytes),
+      freeTierBytes,
+      freeTierFormatted: '10.00 GB',
+      freeBytes,
+      freeFormatted: formatBytes(freeBytes),
+      percentUsed: Number(percentUsed.toFixed(2)),
+      percentFree: Number((100 - percentUsed).toFixed(2)),
+      status: 'connected',
+    };
+  } catch (err) {
+    return { error: err.message || 'Failed to connect to R2 storage' };
+  }
+}
+
 function preserveExistingAdmin() {
   let outputDir;
   return {
@@ -734,6 +837,15 @@ function preserveExistingAdmin() {
             }
           });
           return;
+        }
+
+        // 11. Local Dev API: /api/r2/storage (GET)
+        if (pathname === '/api/r2/storage' && request.method === 'GET') {
+          const reqBucket = url.searchParams.get('bucket');
+          const storage = await getBucketStorageFromVite({ bucket: reqBucket });
+          response.statusCode = storage.error ? 400 : 200;
+          response.setHeader('Content-Type', 'application/json; charset=utf-8');
+          return response.end(JSON.stringify(storage));
         }
 
         next();

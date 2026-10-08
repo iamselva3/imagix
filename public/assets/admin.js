@@ -256,6 +256,11 @@ function switchTab(tabId) {
       frame.src = '/?preview=1';
     }
   }
+
+  // Refresh bucket storage when clicking Cloudflare & R2 tab
+  if (tabId === 'settings') {
+    fetchBucketStorage();
+  }
 }
 
 // ==========================================================================
@@ -1484,6 +1489,95 @@ function setupSettingsTab() {
       }
     });
   });
+
+  // Check Storage button & Refresh button
+  $('#check-bucket-btn')?.addEventListener('click', () => {
+    const bucket = getVal('set-r2-bucket');
+    fetchBucketStorage(bucket);
+  });
+
+  $('#r2-refresh-storage-btn')?.addEventListener('click', () => {
+    const bucket = getVal('set-r2-bucket');
+    fetchBucketStorage(bucket);
+  });
+
+  // Automatically check bucket storage when user changes the bucket name field
+  $('#set-r2-bucket')?.addEventListener('change', () => {
+    const bucket = getVal('set-r2-bucket');
+    if (bucket && bucket.trim()) {
+      fetchBucketStorage(bucket.trim());
+    }
+  });
+}
+
+async function fetchBucketStorage(bucketName) {
+  const badge = $('#r2-status-badge');
+  const dot = $('#r2-status-dot');
+  const label = $('#r2-active-bucket-name');
+  const fill = $('#r2-meter-fill');
+  const usedLbl = $('#r2-meter-used');
+  const freeLbl = $('#r2-meter-free');
+  const statFree = $('#r2-stat-free');
+  const statFreePct = $('#r2-stat-free-pct');
+  const statUsed = $('#r2-stat-used');
+  const statCount = $('#r2-stat-count');
+  const errBox = $('#r2-storage-error');
+
+  const target = (bucketName && bucketName.trim()) || getVal('set-r2-bucket') || 'imagix-photography-images';
+  if (label) label.textContent = target;
+  if (badge) {
+    badge.textContent = 'Checking storage…';
+    badge.style.background = 'rgba(201, 159, 85, 0.2)';
+    badge.style.color = 'var(--gold)';
+  }
+  if (errBox) errBox.hidden = true;
+
+  try {
+    const res = await fetch(`/api/r2/storage?bucket=${encodeURIComponent(target)}`);
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || 'Failed to inspect bucket');
+    }
+
+    if (dot) {
+      dot.className = 'r2-pulse-dot';
+    }
+    if (badge) {
+      badge.textContent = 'Active & Connected';
+      badge.style.background = 'rgba(62, 201, 114, 0.18)';
+      badge.style.color = '#3ec972';
+    }
+    if (label) label.textContent = data.bucket;
+
+    if (fill) fill.style.width = `${Math.max(1, data.percentUsed)}%`;
+    if (usedLbl) usedLbl.textContent = `Used: ${data.usedFormatted} (${data.percentUsed}%)`;
+    if (freeLbl) freeLbl.textContent = `Free Remaining: ${data.freeFormatted}`;
+
+    if (statFree) statFree.textContent = data.freeFormatted;
+    if (statFreePct) statFreePct.textContent = `${data.percentFree}% Available (of 10.00 GB Free Tier)`;
+    if (statUsed) statUsed.textContent = data.usedFormatted;
+    if (statCount) statCount.textContent = `${data.objectCount} stored objects`;
+  } catch (err) {
+    if (dot) {
+      dot.className = 'r2-pulse-dot err';
+    }
+    if (badge) {
+      badge.textContent = 'Not Accessible';
+      badge.style.background = 'rgba(224, 82, 82, 0.18)';
+      badge.style.color = '#e05252';
+    }
+    if (fill) fill.style.width = '0%';
+    if (usedLbl) usedLbl.textContent = 'Used: Unavailable';
+    if (freeLbl) freeLbl.textContent = 'Free: Unknown';
+    if (statFree) statFree.textContent = '-- GB';
+    if (statUsed) statUsed.textContent = '-- MB';
+    if (statCount) statCount.textContent = '0 objects';
+    if (errBox) {
+      errBox.hidden = false;
+      errBox.textContent = `⚠️ ${err.message}`;
+    }
+  }
 }
 
 async function loadSettings() {
@@ -1491,7 +1585,8 @@ async function loadSettings() {
     const data = await api('/api/settings');
     const s = data.settings || {};
 
-    setVal('set-r2-bucket', s.R2_BUCKET_NAME || 'imagix-photography-images');
+    const activeBucket = s.R2_BUCKET_NAME || 'imagix-photography-images';
+    setVal('set-r2-bucket', activeBucket);
     setVal('set-cf-account-id', s.CLOUDFLARE_ACCOUNT_ID);
     setVal('set-r2-access-key', s.R2_ACCESS_KEY_ID);
     setVal('set-r2-secret-key', s.R2_SECRET_ACCESS_KEY);
@@ -1502,6 +1597,9 @@ async function loadSettings() {
     setVal('set-admin-pass', s.ADMIN_PASSWORD || 'admin');
     setVal('set-jwt-secret', s.JWT_SECRET);
     setVal('set-whatsapp', s.WHATSAPP_NUMBER || '+919047055747');
+
+    // Fetch storage for active bucket
+    fetchBucketStorage(activeBucket);
   } catch (err) {
     // Non-fatal if settings fail
     console.warn('Could not load settings:', err);
@@ -1520,8 +1618,9 @@ async function saveSettings() {
   if (status) status.textContent = 'Updating configuration…';
 
   try {
+    const chosenBucket = getVal('set-r2-bucket') || 'imagix-photography-images';
     const payload = {
-      R2_BUCKET_NAME: getVal('set-r2-bucket') || 'imagix-photography-images',
+      R2_BUCKET_NAME: chosenBucket,
       CLOUDFLARE_ACCOUNT_ID: getVal('set-cf-account-id'),
       R2_ACCESS_KEY_ID: getVal('set-r2-access-key'),
       R2_SECRET_ACCESS_KEY: getVal('set-r2-secret-key'),
@@ -1545,6 +1644,9 @@ async function saveSettings() {
       status.textContent = `✓ Successfully saved and updated .dev.vars at ${new Date().toLocaleTimeString()}`;
       status.style.color = 'var(--success)';
     }
+
+    // Refresh storage after saving
+    fetchBucketStorage(chosenBucket);
   } catch (err) {
     toast(`Failed to save settings: ${err.message}`, 'danger');
     if (status) {

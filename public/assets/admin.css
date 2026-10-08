@@ -1134,3 +1134,126 @@ textarea {
   height: 18px;
   accent-color: var(--gold);
 }
+
+/* --------------------------------------------------------------------------
+   R2 Bucket Live Storage Monitor Widget
+   -------------------------------------------------------------------------- */
+.r2-storage-card {
+  margin-top: 18px;
+  background: rgba(201, 159, 85, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+}
+
+.r2-storage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.r2-storage-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.r2-pulse-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 10px rgba(62, 201, 114, 0.6);
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.r2-pulse-dot.err {
+  background: var(--danger);
+  box-shadow: 0 0 10px rgba(224, 82, 82, 0.6);
+}
+
+.r2-meter-wrap {
+  margin-bottom: 16px;
+}
+
+.r2-meter-bar {
+  height: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.r2-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #c99f55, #fdeab8);
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(201, 159, 85, 0.5);
+}
+
+.r2-meter-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.r2-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 680px) {
+  .r2-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.r2-metric-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+
+.r2-metric-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.r2-metric-value {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.r2-metric-value.text-gold {
+  color: var(--gold-light);
+}
+
+.r2-metric-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.r2-storage-err {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(224, 82, 82, 0.12);
+  border: 1px solid rgba(224, 82, 82, 0.3);
+  border-radius: var(--radius-sm);
+  color: #ff9999;
+  font-size: 12px;
+}

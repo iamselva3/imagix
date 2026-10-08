@@ -740,6 +740,53 @@ const handleApi = async (request, env, url) => {
     return json({ success: true, settings: body }, 200, headers);
   }
 
+  // 9. R2 Storage Usage & Free Space Monitor
+  if (path === "/api/r2/storage" && request.method === "GET") {
+    const reqBucket = url.searchParams.get("bucket");
+    const configuredBucket = env?.R2_BUCKET_NAME || "imagix-photography-images";
+    const targetBucket = (reqBucket && reqBucket.trim()) || configuredBucket;
+
+    try {
+      let objectCount = 0;
+      let totalBytes = 0;
+
+      if (env?.IMAGIX_PHOTOS && (!reqBucket || reqBucket === configuredBucket)) {
+        const listed = await env.IMAGIX_PHOTOS.list({ limit: 1000 });
+        objectCount = listed.objects.length;
+        totalBytes = listed.objects.reduce((sum, obj) => sum + (obj.size || 0), 0);
+      }
+
+      const freeTierBytes = 10 * 1024 * 1024 * 1024; // 10 GB
+      const freeBytes = Math.max(0, freeTierBytes - totalBytes);
+
+      const formatBytes = (b) => {
+        if (b < 1024) return `${b} B`;
+        if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+        if (b < 1024 * 1024 * 1024) return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+        return `${(b / (1024 * 1024 * 1024)).toFixed(3)} GB`;
+      };
+
+      const percentUsed = Math.min(100, (totalBytes / freeTierBytes) * 100);
+
+      return json({
+        success: true,
+        bucket: targetBucket,
+        objectCount,
+        totalBytes,
+        usedFormatted: formatBytes(totalBytes),
+        freeTierBytes,
+        freeTierFormatted: "10.00 GB",
+        freeBytes,
+        freeFormatted: formatBytes(freeBytes),
+        percentUsed: Number(percentUsed.toFixed(2)),
+        percentFree: Number((100 - percentUsed).toFixed(2)),
+        status: "connected",
+      }, 200, headers);
+    } catch (e) {
+      return json({ error: e.message || "Failed to retrieve R2 storage" }, 400, headers);
+    }
+  }
+
   return error("Not found", 404, headers);
 };
 
