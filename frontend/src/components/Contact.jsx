@@ -1,9 +1,22 @@
 import React, { useState, useRef } from 'react';
 
-export default function Contact() {
+export default function Contact({ content, general }) {
   const [status, setStatus] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const startedAtRef = useRef(Date.now());
+
+  const eyebrow = content?.eyebrow || 'YOUR TURN 05 / 06';
+  const headingLead = content?.headingLead || 'Let’s make';
+  const headingAccent = content?.headingAccent || 'something last.';
+  const description = content?.description || 'Tell us about your celebration, your milestone, or the portrait you’ve been dreaming of. We can’t wait to hear from you.';
+  const cityTitle = content?.cityTitle || 'COIMBATORE & BEYOND';
+  const availability = content?.availability || 'Available throughout South India and destination celebrations across India.';
+  const hoursText = content?.hoursText || 'Tuesday – Sunday, 10:00 AM – 7:30 PM IST';
+  const submitButtonText = content?.submitButtonText || 'Send Your Note';
+
+  const instagramUrl = general?.instagramUrl || 'https://www.instagram.com/imagixphotography_/';
+  const email = general?.email || 'studio@imagix.in';
+  const phone = general?.phone || '+91 90470 55747';
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -45,22 +58,21 @@ export default function Contact() {
     <section className="contact-section section-pad" id="contact">
       <div className="contact-intro">
         <div className="eyebrow" data-reveal>
-          YOUR TURN <span>05 / 06</span>
+          {eyebrow}
         </div>
         <h2 data-reveal>
-          Let’s make
+          {headingLead}
           <br />
-          something <em>last.</em>
+          <em>{headingAccent}</em>
         </h2>
         <p>
-          Tell us about your celebration, your milestone, or the portrait you’ve been
-          dreaming of. We can’t wait to hear from you.
+          {description}
         </p>
 
         <div className="contact-detail">
           <span>FIND US ON INSTAGRAM</span>
           <a
-            href="https://www.instagram.com/imagixphotography_/"
+            href={instagramUrl}
             target="_blank"
             rel="noreferrer"
           >
@@ -69,8 +81,17 @@ export default function Contact() {
         </div>
 
         <div className="contact-detail">
-          <span>STUDIO LOCATION</span>
-          <p>Tamil Nadu, India · Available for worldwide travel</p>
+          <span>{cityTitle}</span>
+          <p>{availability}</p>
+        </div>
+
+        <div className="contact-detail">
+          <span>DIRECT CONTACT &amp; HOURS</span>
+          <p>
+            {phone} · <a href={`mailto:${email}`}>{email}</a>
+            <br />
+            {hoursText}
+          </p>
         </div>
       </div>
 
@@ -144,7 +165,7 @@ export default function Contact() {
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Sending…' : 'Send Your Note'} <span>↗</span>
+          {isSubmitting ? 'Sending…' : submitButtonText} <span>↗</span>
         </button>
 
         {status && (

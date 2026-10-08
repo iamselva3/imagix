@@ -269,6 +269,7 @@ em {
   background: #090908;
   z-index: 1;
   pointer-events: none;
+  will-change: opacity;
 }
 
 .splash-center {
@@ -687,14 +688,15 @@ em {
 
 .hero-title-line {
   display: block;
-  overflow: visible;
-  padding-bottom: 0.08em;
+  overflow: hidden;
+  padding-bottom: 0.12em;
   padding-right: 0.25em;
 }
 
 .hero-title-line > span {
   display: inline-block;
   white-space: nowrap;
+  will-change: transform, opacity;
 }
 
 .hero-title-line em {
@@ -721,8 +723,7 @@ em {
 .hero-portrait {
   position: relative;
   min-width: 0;
-  align-self: stretch;
-  min-height: 540px;
+  height: clamp(500px, 62vh, 580px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -746,6 +747,7 @@ em {
   white-space: nowrap;
   pointer-events: none;
   user-select: none;
+  will-change: transform, opacity;
 }
 
 .portrait-glow {
@@ -773,6 +775,7 @@ em {
   filter: drop-shadow(0 20px 24px rgba(35, 30, 24, 0.12));
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
   mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
+  will-change: transform, opacity;
 }
 
 /* Luxury Aesthetic Calligraphy Signature with Live Pen Drawing Effect */

@@ -10,6 +10,7 @@
     "preview": "vite preview --config frontend/vite.config.js",
     "worker:dev": "npm run build && wrangler dev",
     "deploy": "npm run build && wrangler deploy",
+    "sync:r2": "node scripts/sync-photos-to-r2.mjs",
     "check": "node --check src/index.js && node --check frontend/vite.config.js"
   },
   "dependencies": {

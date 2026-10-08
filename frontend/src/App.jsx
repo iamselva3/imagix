@@ -20,12 +20,14 @@ import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 
 import { FALLBACK_PHOTOS } from './data/photographyData';
+import { DEFAULT_CONTENT } from './data/defaultSiteContent';
 import './styles.css';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function App() {
   const rootRef = useRef(null);
+  const [content, setContent] = useState(DEFAULT_CONTENT);
   const [photos, setPhotos] = useState(FALLBACK_PHOTOS);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -59,11 +61,37 @@ export default function App() {
   const [splash, setSplash] = useState(
     () => !prefersReduced && !sessionStorage.getItem('imagix-intro-seen')
   );
-  const [splashDone, setSplashDone] = useState(!splash);
+  const [isRevealing, setIsRevealing] = useState(() => !splash);
+  const [splashDone, setSplashDone] = useState(() => !splash);
 
   const refreshScrollTrigger = useCallback(() => {
     ScrollTrigger.refresh();
   }, []);
+
+  // Fetch dynamic CMS content from /api/content
+  const loadContent = useCallback(() => {
+    fetch('/api/content')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.content) {
+          setContent(data.content);
+        }
+      })
+      .catch(() => {
+        // Fall back to default content
+      });
+  }, []);
+
+  useEffect(() => {
+    loadContent();
+    const onWindowFocus = () => loadContent();
+    window.addEventListener('focus', onWindowFocus);
+    window.addEventListener('storage', onWindowFocus);
+    return () => {
+      window.removeEventListener('focus', onWindowFocus);
+      window.removeEventListener('storage', onWindowFocus);
+    };
+  }, [loadContent]);
 
   // Fetch photos from worker API: GET /api/photos
   useEffect(() => {
@@ -99,8 +127,10 @@ export default function App() {
 
       const lenis = new Lenis({
         duration: 1.15,
-        smoothWheel: true,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 0.9,
       });
 
       lenis.on('scroll', ScrollTrigger.update);
@@ -138,33 +168,55 @@ export default function App() {
       if (prefersReduced || !splashDone) return;
 
       // Masked text line reveals
-      gsap.utils.toArray('[data-reveal]').forEach((element) => {
-        gsap.from(element, {
-          y: 28,
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power3.out',
+      const revealElements = gsap.utils.toArray('[data-reveal]');
+      revealElements.forEach((el) => {
+        gsap.fromTo(
+          el,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.85,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              once: true,
+            },
+          }
+        );
+      });
+
+      // Ambient Parallax on decorative blur or background rings
+      const glows = gsap.utils.toArray('.ambient-glow, .cinema-glow');
+      glows.forEach((glow) => {
+        gsap.to(glow, {
+          y: -60,
+          ease: 'none',
           scrollTrigger: {
-            trigger: element,
-            start: 'top 86%',
-            once: true,
+            trigger: glow,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.5,
           },
         });
       });
 
-      // Clip path image unmask reveals
-      gsap.utils.toArray('.image-reveal img').forEach((img) => {
+      // Smooth section headings subtle scale-in
+      const headings = gsap.utils.toArray('.section-heading h2');
+      headings.forEach((h) => {
         gsap.fromTo(
-          img,
-          { clipPath: 'inset(10% 8% 10% 8%)', scale: 1.07 },
+          h,
+          { opacity: 0, y: 30, scale: 0.98 },
           {
-            clipPath: 'inset(0% 0% 0% 0%)',
+            opacity: 1,
+            y: 0,
             scale: 1,
-            duration: 0.9,
-            ease: 'power3.out',
+            duration: 0.8,
+            ease: 'power2.out',
             scrollTrigger: {
-              trigger: img,
-              start: 'top 90%',
+              trigger: h,
+              start: 'top 85%',
               once: true,
             },
           }
@@ -174,16 +226,22 @@ export default function App() {
     { scope: rootRef, dependencies: [splashDone], revertOnUpdate: true }
   );
 
+  const handleSplashReveal = useCallback(() => {
+    setIsRevealing(true);
+  }, []);
+
   const finishSplash = useCallback(() => {
+    setIsRevealing(true);
+    setSplashDone(true);
     setSplash(false);
-    window.setTimeout(() => {
-      setSplashDone(true);
-      ScrollTrigger.refresh();
-    }, 550);
+    ScrollTrigger.refresh();
   }, []);
 
   useEffect(() => {
-    if (!splash) setSplashDone(true);
+    if (!splash) {
+      setIsRevealing(true);
+      setSplashDone(true);
+    }
   }, [splash]);
 
   const handleCategorySelect = useCallback((categoryName) => {
@@ -196,33 +254,40 @@ export default function App() {
 
   return (
     <div className="app-shell" ref={rootRef}>
-      {splash && <Splash onDone={finishSplash} />}
+      {splash && <Splash onDone={finishSplash} onReveal={handleSplashReveal} />}
 
-      <Header theme={theme} onToggleTheme={toggleTheme} />
+      <Header theme={theme} onToggleTheme={toggleTheme} general={content.general} />
 
       <main id="main-content">
-        <Hero onImageLoad={refreshScrollTrigger} />
-        <StoryIntro />
+        <Hero
+          onImageLoad={refreshScrollTrigger}
+          content={content.hero}
+          isRevealing={isRevealing}
+          splashDone={splashDone}
+        />
+        <StoryIntro content={content.story} />
         <Portfolio
           photos={photos}
           onImageLoad={refreshScrollTrigger}
           onSelectCategory={handleCategorySelect}
+          content={content.portfolio}
         />
-        <CinemaReel />
+        <CinemaReel content={content.cinema} />
         <Marquee />
         <Gallery
           photos={photos}
           onImageLoad={refreshScrollTrigger}
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
+          content={content.gallery}
         />
-        <Process />
-        <Testimonials />
-        <Packages />
-        <Contact />
+        <Process content={content.process} />
+        <Testimonials content={content.testimonials} />
+        <Packages content={content.packages} />
+        <Contact content={content.contact} general={content.general} />
       </main>
 
-      <Footer theme={theme} />
+      <Footer theme={theme} content={content.footer} general={content.general} />
       <WhatsAppButton />
     </div>
   );

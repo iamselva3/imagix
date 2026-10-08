@@ -1,4 +1,897 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#0b0b0c"><link rel="icon" href="/assets/logo-icon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/admin.css"><title>Imagix Studio — Admin</title></head>
-<body><header><a href="/" class="admin-brand"><img src="/assets/logo-lockup-light.svg" alt="Imagix Photography"></a><span>STUDIO ADMIN</span></header><main><section class="login" id="login-panel"><p class="eyebrow">PRIVATE STUDIO</p><h1>Good to have <em>you back.</em></h1><p>Sign in to manage the Imagix gallery.</p><form id="login-form"><label>Admin password<input name="password" type="password" autocomplete="current-password" required></label><button>Sign in <b>↗</b></button><p class="status" id="login-status" role="status"></p></form></section>
-<section class="dashboard" id="dashboard" hidden><div class="dash-heading"><div><p class="eyebrow">THE IMAGE LIBRARY</p><h1>Keep it <em>current.</em></h1></div><button class="quiet" id="logout">Sign out</button></div><section class="upload-box" id="drop-zone"><div class="upload-icon">＋</div><h2>Add photographs</h2><p>Drop image files here or choose from your device.<br>Images are resized to WebP before upload.</p><label class="choose-files">Choose images<input id="file-input" type="file" accept="image/*" multiple hidden></label><p class="status" id="upload-status" role="status"></p><div class="upload-progress" id="upload-progress" hidden><i></i></div></section><div class="library-head"><h2>Your gallery <span id="photo-count">0</span></h2><button class="quiet" id="refresh">Refresh ↻</button></div><div class="photo-list" id="photo-list"></div></section></main><script type="module" src="/assets/admin.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#080807">
+  <link rel="icon" href="/assets/logo-icon.svg" type="image/svg+xml">
+  <title>Imagix Studio — Master CMS &amp; Gallery Admin</title>
+  <link rel="stylesheet" href="/assets/admin.css">
+</head>
+<body>
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- LOGIN PANEL -->
+  <div class="login-wrapper" id="login-panel">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="/assets/imagix-gold-lockup-light.svg" alt="Imagix Studio" width="180" height="52">
+      </div>
+      <p class="eyebrow">STUDIO MANAGEMENT PORTAL</p>
+      <h1>Welcome back, <em>storyteller.</em></h1>
+      <p class="login-sub">Sign in to edit website content, upload photographs, and manage studio settings in real-time.</p>
+      
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-pass">Studio Security Password</label>
+          <div class="password-input-wrap">
+            <input id="admin-pass" name="password" type="password" autocomplete="current-password" placeholder="Enter password…" required>
+            <button type="button" id="toggle-pass" aria-label="Toggle password visibility">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-gold btn-block" id="login-btn">
+          <span>Authenticate &amp; Open Studio</span>
+          <b>→</b>
+        </button>
+        <p class="status" id="login-status" role="status"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN APP -->
+  <div class="admin-app" id="admin-app" hidden>
+    <!-- Left Navigation Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <a href="/" target="_blank" class="sidebar-brand" title="View live site">
+          <img src="/assets/imagix-gold-lockup-light.svg" alt="Imagix Studio" width="140" height="40">
+        </a>
+        <span class="badge-cms">CMS 2.0</span>
+      </div>
+
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <button type="button" class="nav-item active" data-tab="hero">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Hero &amp; Cutout</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="story">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">Story &amp; Philosophy</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="photos">
+          <span class="nav-icon">📸</span>
+          <span class="nav-label">Photo Library</span>
+          <span class="nav-count" id="nav-photo-count">0</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="cinema">
+          <span class="nav-icon">🎬</span>
+          <span class="nav-label">Cinema Reel</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="portfolio">
+          <span class="nav-icon">🏷️</span>
+          <span class="nav-label">Portfolio Chapters</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="process">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Process Steps</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="packages">
+          <span class="nav-icon">💎</span>
+          <span class="nav-label">Packages &amp; Pricing</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="testimonials">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Client Reviews</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="contact">
+          <span class="nav-icon">📬</span>
+          <span class="nav-label">Contact &amp; Studio</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="settings">
+          <span class="nav-icon">☁️</span>
+          <span class="nav-label">Cloudflare &amp; R2</span>
+        </button>
+        <div class="nav-divider"></div>
+        <button type="button" class="nav-item nav-preview-item" data-tab="full-preview">
+          <span class="nav-icon">👁️</span>
+          <span class="nav-label">Live Site Preview</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <span class="user-status-dot"></span>
+          <span>Studio Admin Active</span>
+        </div>
+        <button type="button" class="btn-logout" id="logout-btn" title="Sign out of admin">Sign out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Work Area -->
+    <main class="admin-main">
+      <!-- Top Action Bar -->
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <h2 id="section-title">Hero Section Editor</h2>
+          <p id="section-desc">Manage headlines, kicker, stats, and the cutout portrait.</p>
+        </div>
+        <div class="topbar-actions">
+          <a href="/" target="_blank" class="btn btn-outline" id="view-site-btn">
+            <span>View Client Site</span>
+            <b>↗</b>
+          </a>
+          <button type="button" class="btn btn-gold" id="save-content-btn">
+            <span class="save-icon">💾</span>
+            <span class="save-text">Save Changes</span>
+            <span class="kbd-hint">Ctrl+S</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Tab Panels Container -->
+      <div class="panels-container">
+
+        <!-- TAB 1: HERO SECTION -->
+        <section class="tab-panel active" id="panel-hero">
+          <div class="panel-layout">
+            <div class="editor-col">
+              <div class="card">
+                <div class="card-head">
+                  <h3>Headlines &amp; Text Copy</h3>
+                  <p>All words rendered in the client Hero section.</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="hero-kicker">Eyebrow Kicker</label>
+                  <input type="text" id="hero-kicker" placeholder="e.g. WEDDING &amp; PORTRAIT PHOTOGRAPHY —">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="hero-line1">Headline Line 1</label>
+                    <input type="text" id="hero-line1" placeholder="e.g. MOMENTS TODAY.">
+                  </div>
+                  <div class="form-group">
+                    <label for="hero-line2-em">Line 2 Emphasized (Italic Style)</label>
+                    <input type="text" id="hero-line2-em" placeholder="e.g. MEMORIES">
+                  </div>
+                  <div class="form-group">
+                    <label for="hero-line2-text">Line 2 Text</label>
+                    <input type="text" id="hero-line2-text" placeholder="e.g. FOREVER.">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="hero-desc">Subheading Description</label>
+                  <textarea id="hero-desc" rows="3" placeholder="Honest stories, artfully kept..."></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="hero-cta-text">CTA Button Text</label>
+                    <input type="text" id="hero-cta-text" placeholder="e.g. Book Your Shoot">
+                  </div>
+                  <div class="form-group">
+                    <label for="hero-cta-link">CTA Button Link</label>
+                    <input type="text" id="hero-cta-link" placeholder="e.g. #contact">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="hero-backword">Giant Watermark Word</label>
+                    <input type="text" id="hero-backword" placeholder="e.g. IMAGIX">
+                  </div>
+                  <div class="form-group">
+                    <label for="hero-caption">Cutout Badge Caption</label>
+                    <input type="text" id="hero-caption" placeholder="e.g. REAL PEOPLE · REAL FEELING">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hero Cutout Image Manager -->
+              <div class="card">
+                <div class="card-head">
+                  <h3>Hero Cutout Portrait (Transparent PNG / WebP)</h3>
+                  <p>Must have <strong>no background</strong> (isolated subject cutout) to blend in front of the giant IMAGIX lettering.</p>
+                </div>
+
+                <div class="cutout-uploader">
+                  <div class="cutout-preview-box">
+                    <div class="checkerboard-bg">
+                      <img id="cutout-preview-img" src="/assets/hero-couple.png" alt="Current hero cutout">
+                    </div>
+                    <div class="cutout-meta">
+                      <span id="cutout-src-label">/assets/hero-couple.png</span>
+                      <button type="button" class="btn btn-small btn-outline" id="reset-cutout-btn">Reset to Default</button>
+                    </div>
+                  </div>
+
+                  <div class="cutout-dropzone" id="cutout-dropzone">
+                    <div class="drop-icon">🖼️</div>
+                    <h4>Upload New Transparent Cutout</h4>
+                    <p>Drop transparent PNG / WebP here or choose file.<br><small class="text-muted">Tip: Remove background using Photoshop, Remove.bg, or Canva.</small></p>
+                    <label class="btn btn-outline btn-file">
+                      <span>Choose Transparent Image</span>
+                      <input type="file" id="cutout-file-input" accept="image/png,image/webp" hidden>
+                    </label>
+                    <p class="status" id="cutout-upload-status"></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Hero Stats Editor -->
+              <div class="card">
+                <div class="card-head">
+                  <h3>Studio Achievement Numbers</h3>
+                  <p>Displayed in the bottom stat bar of the Hero.</p>
+                </div>
+                <div id="hero-stats-container" class="stats-grid-editor"></div>
+              </div>
+            </div>
+
+            <!-- Live Preview Column -->
+            <div class="preview-col">
+              <div class="preview-sticky-card">
+                <div class="preview-card-head">
+                  <span>LIVE SECTION PREVIEW</span>
+                  <span class="preview-badge">Real-time</span>
+                </div>
+                <div class="mockup-hero" id="mockup-hero">
+                  <div class="mockup-hero-kicker" id="pv-hero-kicker">WEDDING &amp; PORTRAIT PHOTOGRAPHY —</div>
+                  <h1 class="mockup-hero-title">
+                    <span id="pv-hero-line1">MOMENTS TODAY.</span><br>
+                    <em id="pv-hero-line2-em">MEMORIES</em> <span id="pv-hero-line2-text">FOREVER.</span>
+                  </h1>
+                  <p class="mockup-hero-desc" id="pv-hero-desc">Honest stories, artfully kept.</p>
+                  <div class="mockup-hero-center">
+                    <div class="mockup-hero-backword" id="pv-hero-backword">IMAGIX</div>
+                    <img id="pv-cutout-img" src="/assets/hero-couple.png" alt="Cutout">
+                    <div class="mockup-caption" id="pv-hero-caption">REAL PEOPLE · REAL FEELING</div>
+                  </div>
+                  <div class="mockup-hero-stats" id="pv-hero-stats"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: STORY & PHILOSOPHY -->
+        <section class="tab-panel" id="panel-story">
+          <div class="panel-layout">
+            <div class="editor-col">
+              <div class="card">
+                <div class="card-head">
+                  <h3>Philosophy &amp; Intro Copy</h3>
+                  <p>Appears directly beneath the Hero.</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="story-eyebrow">Eyebrow</label>
+                  <input type="text" id="story-eyebrow">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="story-title-lead">Heading Lead</label>
+                    <input type="text" id="story-title-lead">
+                  </div>
+                  <div class="form-group">
+                    <label for="story-title-accent">Heading Accent (Italic)</label>
+                    <input type="text" id="story-title-accent">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="story-p1">Paragraph 1</label>
+                  <textarea id="story-p1" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="story-p2">Paragraph 2</label>
+                  <textarea id="story-p2" rows="3"></textarea>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="story-link-text">Process Link Text</label>
+                    <input type="text" id="story-link-text">
+                  </div>
+                  <div class="form-group">
+                    <label for="story-link-href">Process Link Target</label>
+                    <input type="text" id="story-link-href">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-col">
+              <div class="preview-sticky-card">
+                <div class="preview-card-head">
+                  <span>LIVE STORY PREVIEW</span>
+                  <span class="preview-badge">Real-time</span>
+                </div>
+                <div class="mockup-story">
+                  <div class="mockup-eyebrow" id="pv-story-eyebrow">A LITTLE ABOUT US ✳</div>
+                  <h2 class="mockup-title">
+                    <span id="pv-story-title-lead">Life happens in the in-between.</span> <em id="pv-story-title-accent">That’s where we look.</em>
+                  </h2>
+                  <p id="pv-story-p1" class="text-body"></p>
+                  <p id="pv-story-p2" class="text-body"></p>
+                  <a href="#contact" class="mockup-link" id="pv-story-link">Get to know our process ↗</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: PHOTO LIBRARY & DETAILED METADATA -->
+        <section class="tab-panel" id="panel-photos">
+          <div class="photos-management-header">
+            <div>
+              <h3>Gallery Master Archive</h3>
+              <p>Add photographs with complete story details. Deleting an item immediately removes it from R2 storage.</p>
+            </div>
+            <button type="button" class="btn btn-gold" id="open-upload-modal-btn">
+              <span>＋ Add Photograph with Details</span>
+            </button>
+          </div>
+
+          <!-- Category Filter Bar -->
+          <div class="admin-category-filter" id="admin-category-filter">
+            <button type="button" class="cat-pill active" data-cat="All">All (<span id="cat-count-all">0</span>)</button>
+            <button type="button" class="cat-pill" data-cat="Wedding">Wedding</button>
+            <button type="button" class="cat-pill" data-cat="Pre-Wedding">Pre-Wedding</button>
+            <button type="button" class="cat-pill" data-cat="Maternity">Maternity</button>
+            <button type="button" class="cat-pill" data-cat="Baby &amp; Kids">Baby &amp; Kids</button>
+            <button type="button" class="cat-pill" data-cat="Portrait &amp; Model">Portrait &amp; Model</button>
+            <button type="button" class="cat-pill" data-cat="Cinematography">Cinematography</button>
+          </div>
+
+          <!-- Photos List Container -->
+          <div class="admin-photos-grid" id="admin-photos-grid">
+            <p class="empty-state">Loading studio gallery…</p>
+          </div>
+        </section>
+
+        <!-- TAB 4: CINEMA REEL -->
+        <section class="tab-panel" id="panel-cinema">
+          <div class="panel-layout">
+            <div class="editor-col">
+              <div class="card">
+                <div class="card-head">
+                  <h3>Motion Stories &amp; Cinema Section</h3>
+                  <p>Headlines and video asset configurations.</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="cinema-eyebrow">Eyebrow</label>
+                  <input type="text" id="cinema-eyebrow">
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="cinema-lead">Heading Lead</label>
+                    <input type="text" id="cinema-lead">
+                  </div>
+                  <div class="form-group">
+                    <label for="cinema-accent">Heading Accent (Italic)</label>
+                    <input type="text" id="cinema-accent">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="cinema-desc">Description</label>
+                  <textarea id="cinema-desc" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label for="cinema-video-url">Video Source URL (MP4 / WebM)</label>
+                  <input type="text" id="cinema-video-url">
+                </div>
+
+                <div class="form-group">
+                  <label for="cinema-poster-url">Poster Thumbnail URL</label>
+                  <input type="text" id="cinema-poster-url">
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-col">
+              <div class="preview-sticky-card">
+                <div class="preview-card-head">
+                  <span>LIVE CINEMA PREVIEW</span>
+                  <span class="preview-badge">Real-time</span>
+                </div>
+                <div class="mockup-cinema">
+                  <div class="mockup-eyebrow" id="pv-cinema-eyebrow">CINEMATIC STORIES 03 / 06</div>
+                  <h2 class="mockup-title">
+                    <span id="pv-cinema-lead">Stories that</span> <em id="pv-cinema-accent">move.</em>
+                  </h2>
+                  <p id="pv-cinema-desc" class="text-body"></p>
+                  <div class="mockup-video-box">
+                    <video id="pv-cinema-video" src="/assets/studio/imagix-studio-reel.mp4" controls muted playsinline></video>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: PORTFOLIO CHAPTERS -->
+        <section class="tab-panel" id="panel-portfolio">
+          <div class="card">
+            <div class="card-head">
+              <h3>Portfolio Section Headlines</h3>
+              <p>The intro and titles for the 6 card swap chapters.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="portfolio-eyebrow">Eyebrow</label>
+                <input type="text" id="portfolio-eyebrow">
+              </div>
+              <div class="form-group">
+                <label for="portfolio-heading">Heading</label>
+                <input type="text" id="portfolio-heading">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Portfolio 6 Chapter Cards</h3>
+              <p>Titles and taglines for each of the core disciplines.</p>
+            </div>
+            <div id="portfolio-categories-container" class="portfolio-categories-editor"></div>
+          </div>
+        </section>
+
+        <!-- TAB 6: PROCESS STEPS -->
+        <section class="tab-panel" id="panel-process">
+          <div class="card">
+            <div class="card-head">
+              <h3>Process Section Headlines</h3>
+              <p>Top intro for the workflow steps.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="process-eyebrow">Eyebrow</label>
+                <input type="text" id="process-eyebrow">
+              </div>
+              <div class="form-group">
+                <label for="process-lead">Heading Lead</label>
+                <input type="text" id="process-lead">
+              </div>
+              <div class="form-group">
+                <label for="process-accent">Heading Accent</label>
+                <input type="text" id="process-accent">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="process-desc">Description</label>
+              <textarea id="process-desc" rows="2"></textarea>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>4 Workflow Steps</h3>
+              <p>Edit the four stages clients journey through with Imagix.</p>
+            </div>
+            <div id="process-steps-container" class="process-steps-editor"></div>
+          </div>
+        </section>
+
+        <!-- TAB 7: PACKAGES & PRICING -->
+        <section class="tab-panel" id="panel-packages">
+          <div class="card">
+            <div class="card-head">
+              <h3>Packages Section Header</h3>
+              <p>Introductory copy for the collections.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="pkg-eyebrow">Eyebrow</label>
+                <input type="text" id="pkg-eyebrow">
+              </div>
+              <div class="form-group">
+                <label for="pkg-lead">Heading Lead</label>
+                <input type="text" id="pkg-lead">
+              </div>
+              <div class="form-group">
+                <label for="pkg-accent">Heading Accent</label>
+                <input type="text" id="pkg-accent">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="pkg-subtitle">Subtitle</label>
+              <textarea id="pkg-subtitle" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="pkg-note">Footer Note</label>
+              <input type="text" id="pkg-note">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Curated Collections (3 Packages)</h3>
+              <p>Manage package titles, descriptions, feature bullet points, and CTA actions.</p>
+            </div>
+            <div id="packages-list-container" class="packages-list-editor"></div>
+          </div>
+        </section>
+
+        <!-- TAB 8: CLIENT TESTIMONIALS -->
+        <section class="tab-panel" id="panel-testimonials">
+          <div class="card">
+            <div class="card-head">
+              <h3>Client Reviews &amp; Stories</h3>
+              <p>Couples and family quotes displayed in the slider.</p>
+            </div>
+            <div id="testimonials-list-container" class="testimonials-list-editor"></div>
+          </div>
+        </section>
+
+        <!-- TAB 9: CONTACT & STUDIO INFO -->
+        <section class="tab-panel" id="panel-contact">
+          <div class="card">
+            <div class="card-head">
+              <h3>General Studio Coordinates</h3>
+              <p>Applied to WhatsApp floating button, header phone, and footer contact.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="gen-phone">Phone Number</label>
+                <input type="text" id="gen-phone" placeholder="+91 90470 55747">
+              </div>
+              <div class="form-group">
+                <label for="gen-whatsapp">WhatsApp Number (with country code)</label>
+                <input type="text" id="gen-whatsapp" placeholder="+919047055747">
+              </div>
+              <div class="form-group">
+                <label for="gen-email">Studio Email</label>
+                <input type="email" id="gen-email" placeholder="studio@imagix.in">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="gen-address">Studio Address</label>
+                <input type="text" id="gen-address" placeholder="42 Heritage Lane, Race Course, Coimbatore...">
+              </div>
+              <div class="form-group">
+                <label for="gen-instagram">Instagram URL</label>
+                <input type="url" id="gen-instagram" placeholder="https://instagram.com/imagixphotography_/">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Contact Section Copy</h3>
+              <p>Headlines, availability, and button labels.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-eyebrow">Eyebrow</label>
+                <input type="text" id="contact-eyebrow">
+              </div>
+              <div class="form-group">
+                <label for="contact-lead">Heading Lead</label>
+                <input type="text" id="contact-lead">
+              </div>
+              <div class="form-group">
+                <label for="contact-accent">Heading Accent</label>
+                <input type="text" id="contact-accent">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="contact-desc">Intro Description</label>
+              <textarea id="contact-desc" rows="2"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-city">City Badge Title</label>
+                <input type="text" id="contact-city">
+              </div>
+              <div class="form-group">
+                <label for="contact-avail">Travel Availability</label>
+                <input type="text" id="contact-avail">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-hours">Studio Hours</label>
+                <input type="text" id="contact-hours">
+              </div>
+              <div class="form-group">
+                <label for="contact-submit-btn">Submit Button Label</label>
+                <input type="text" id="contact-submit-btn">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <h3>Footer Tagline &amp; Copyright</h3>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="footer-tagline">Footer Tagline</label>
+                <input type="text" id="footer-tagline">
+              </div>
+              <div class="form-group">
+                <label for="footer-copy">Copyright Notice</label>
+                <input type="text" id="footer-copy">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: CLOUDFLARE & R2 STORAGE SETTINGS -->
+        <section class="tab-panel" id="panel-settings">
+          <div class="card" style="border-color: rgba(201, 159, 85, 0.35); background: linear-gradient(135deg, #141310 0%, #1a1813 100%);">
+            <div class="card-head" style="border-bottom-color: rgba(201, 159, 85, 0.2);">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <span class="eyebrow" style="color: var(--gold-light);">CLOUDFLARE &amp; R2 INFRASTRUCTURE</span>
+                  <h3 style="font-size: 19px; margin-top: 4px;">Storage &amp; API Credentials Engine</h3>
+                  <p>Edit your Cloudflare R2 bucket, API credentials, and studio security. Saving here updates your <code>.dev.vars</code> environment variables instantly.</p>
+                </div>
+                <button type="button" class="btn btn-gold" id="save-settings-btn">
+                  <span>💾 Save Settings &amp; Update .dev.vars</span>
+                </button>
+              </div>
+            </div>
+            <p class="status" id="settings-status" style="margin-top: 8px;"></p>
+          </div>
+
+          <!-- Section 1: R2 Storage -->
+          <div class="card">
+            <div class="card-head">
+              <h3>1. Cloudflare R2 Object Storage (Photos &amp; Thumbnails)</h3>
+              <p>Used to store full-resolution photographs, WebP thumbnails, and transparent hero cutouts. Deleting any photo from the library purges it directly from this bucket.</p>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="set-r2-bucket">R2 Bucket Name *</label>
+                <input type="text" id="set-r2-bucket" placeholder="imagix-photography-images" required>
+                <small class="text-muted" style="font-size: 11px;">Default: <code>imagix-photography-images</code></small>
+              </div>
+              <div class="form-group">
+                <label for="set-cf-account-id">Cloudflare Account ID *</label>
+                <input type="text" id="set-cf-account-id" placeholder="e.g. ebb6085a6b7c...">
+                <small class="text-muted" style="font-size: 11px;">Found on Cloudflare dashboard right sidebar</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="set-r2-access-key">R2 Access Key ID (S3 API Token)</label>
+                <input type="text" id="set-r2-access-key" placeholder="e.g. 9a7b8c...">
+                <small class="text-muted" style="font-size: 11px;">From: Cloudflare Dashboard → R2 → Manage R2 API Tokens</small>
+              </div>
+              <div class="form-group">
+                <label for="set-r2-secret-key">R2 Secret Access Key</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="set-r2-secret-key" placeholder="••••••••••••••••">
+                  <button type="button" class="toggle-vis-btn" data-target="set-r2-secret-key" aria-label="Toggle visibility">👁</button>
+                </div>
+                <small class="text-muted" style="font-size: 11px;">S3 Secret Key generated when creating R2 API Token</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="set-r2-domain">R2 Public Custom Media Domain (Optional)</label>
+              <input type="text" id="set-r2-domain" placeholder="https://media.imagix.in (or leave blank to use Worker /media/ proxy)">
+              <small class="text-muted" style="font-size: 11px;">If you connected a custom domain to your R2 bucket in Cloudflare</small>
+            </div>
+          </div>
+
+          <!-- Section 2: KV & Worker -->
+          <div class="card">
+            <div class="card-head">
+              <h3>2. Cloudflare KV Database &amp; Deployment Tokens</h3>
+              <p>Key-Value storage for photo metadata indices, CMS text content, and contact submissions.</p>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="set-kv-id">KV Namespace ID (<code>IMAGIX_META</code>)</label>
+                <input type="text" id="set-kv-id" placeholder="e.g. 5e4f3a2b1c...">
+                <small class="text-muted" style="font-size: 11px;">Create via: <code>npx wrangler kv namespace create IMAGIX_META</code></small>
+              </div>
+              <div class="form-group">
+                <label for="set-cf-token">Cloudflare API Token (Wrangler / Deployments)</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="set-cf-token" placeholder="••••••••••••••••">
+                  <button type="button" class="toggle-vis-btn" data-target="set-cf-token" aria-label="Toggle visibility">👁</button>
+                </div>
+                <small class="text-muted" style="font-size: 11px;">For automated terminal or GitHub Actions deployments</small>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="set-cf-origin">Allowed CORS Origin</label>
+              <input type="text" id="set-cf-origin" placeholder="* (or https://imagix.in, http://localhost:5173)">
+            </div>
+          </div>
+
+          <!-- Section 3: Studio Security Credentials -->
+          <div class="card">
+            <div class="card-head">
+              <h3>3. Studio Security &amp; Access Credentials</h3>
+              <p>Credentials required to authenticate into this Admin CMS portal.</p>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="set-admin-pass">Studio Security Password (<code>ADMIN_PASSWORD</code>) *</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="set-admin-pass" placeholder="Enter admin password…" required>
+                  <button type="button" class="toggle-vis-btn" data-target="set-admin-pass" aria-label="Toggle visibility">👁</button>
+                </div>
+                <small class="text-muted" style="font-size: 11px;">The password you enter on the login screen</small>
+              </div>
+              <div class="form-group">
+                <label for="set-jwt-secret">JWT Signing Secret (<code>JWT_SECRET</code>)</label>
+                <div class="password-input-wrap">
+                  <input type="password" id="set-jwt-secret" placeholder="Random hex string…">
+                  <button type="button" class="toggle-vis-btn" data-target="set-jwt-secret" aria-label="Toggle visibility">👁</button>
+                </div>
+                <small class="text-muted" style="font-size: 11px;">Used to cryptographically sign session tokens</small>
+              </div>
+              <div class="form-group">
+                <label for="set-whatsapp">Studio WhatsApp Number</label>
+                <input type="text" id="set-whatsapp" placeholder="+919047055747">
+                <small class="text-muted" style="font-size: 11px;">For WhatsApp floating button &amp; direct bookings</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Cloudflare Setup Quick Guide -->
+          <div class="card" style="background: rgba(255, 255, 255, 0.02); border-style: dashed;">
+            <div class="card-head">
+              <h3>📖 Quick Reference: Where to find each credential in Cloudflare</h3>
+            </div>
+            <div style="font-size: 12.5px; line-height: 1.7; color: var(--text-muted); display: grid; gap: 12px;">
+              <div>
+                <strong style="color: var(--gold-light);">1. Cloudflare Account ID:</strong>
+                Log into <a href="https://dash.cloudflare.com" target="_blank" style="color: var(--gold);">dash.cloudflare.com</a>. Look at the right sidebar under <em>Account ID</em>. It is a 32-character hex code.
+              </div>
+              <div>
+                <strong style="color: var(--gold-light);">2. R2 Bucket Name:</strong>
+                Go to <em>Cloudflare Dashboard → Storage &amp; Databases → R2</em>. Click <em>Create Bucket</em> and name it <code>imagix-photography-images</code>.
+              </div>
+              <div>
+                <strong style="color: var(--gold-light);">3. R2 Access Key &amp; Secret Key:</strong>
+                In the R2 tab, click <em>Manage R2 API Tokens</em> on the right. Click <em>Create API Token</em> with <em>Object Read &amp; Write</em> permission. It will generate an Access Key ID and Secret Access Key.
+              </div>
+              <div>
+                <strong style="color: var(--gold-light);">4. KV Namespace ID:</strong>
+                Run <code>npx wrangler kv namespace create IMAGIX_META</code> in your terminal. Paste the returned <code>id</code> into the field above.
+              </div>
+              <div>
+                <strong style="color: var(--gold-light);">5. Instant Deletion:</strong>
+                When configured, any photograph deleted in the <em>Photo Library</em> tab is immediately purged from Cloudflare R2 storage without leaving orphaned files.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 10: FULL LIVE WEBSITE PREVIEW -->
+        <section class="tab-panel" id="panel-full-preview">
+          <div class="preview-viewport-bar">
+            <div class="device-switcher">
+              <button type="button" class="device-btn active" data-width="100%">🖥️ Full Width</button>
+              <button type="button" class="device-btn" data-width="1280px">💻 Laptop (1280px)</button>
+              <button type="button" class="device-btn" data-width="768px">📱 Tablet (768px)</button>
+              <button type="button" class="device-btn" data-width="390px">📱 Mobile (390px)</button>
+            </div>
+            <button type="button" class="btn btn-small btn-outline" id="refresh-preview-frame">↻ Reload Preview Frame</button>
+          </div>
+          <div class="preview-frame-wrap" id="preview-frame-wrap">
+            <iframe id="live-preview-iframe" src="/?preview=1" title="Live Site Preview"></iframe>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: ADD / EDIT PHOTOGRAPH WITH RICH DETAILS -->
+  <div class="modal-backdrop" id="photo-modal" hidden>
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="photo-modal-title">Add Photograph</h3>
+        <button type="button" class="modal-close" id="close-photo-modal">✕</button>
+      </div>
+
+      <form id="photo-modal-form">
+        <input type="hidden" id="pm-id">
+
+        <!-- Image Upload Field (for new photos) -->
+        <div class="form-group" id="pm-file-group">
+          <label>Photograph File</label>
+          <div class="cutout-dropzone" id="photo-modal-dropzone">
+            <div class="drop-icon">📷</div>
+            <p>Drop photograph here or select from computer.<br><small class="text-muted">High-res WebP and thumbnail will be automatically created.</small></p>
+            <input type="file" id="pm-file-input" accept="image/*" hidden>
+            <button type="button" class="btn btn-small btn-outline" id="pm-pick-file-btn">Choose Image File</button>
+            <span id="pm-filename-badge"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pm-title">Photograph Title *</label>
+            <input type="text" id="pm-title" placeholder="e.g. Timeless Bride in Traditional Silk" required>
+          </div>
+          <div class="form-group">
+            <label for="pm-category">Category *</label>
+            <select id="pm-category" required>
+              <option value="Wedding">Wedding</option>
+              <option value="Pre-Wedding">Pre-Wedding</option>
+              <option value="Maternity">Maternity</option>
+              <option value="Baby &amp; Kids">Baby &amp; Kids</option>
+              <option value="Portrait &amp; Model">Portrait &amp; Model</option>
+              <option value="Cinematography">Cinematography</option>
+              <option value="Events">Events</option>
+              <option value="Product">Product</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pm-subtitle">Subtitle / Tagline</label>
+          <input type="text" id="pm-subtitle" placeholder="e.g. Sacred temple muhurtham in pure Kanchipuram silk">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="pm-client">Client / Couple Name</label>
+            <input type="text" id="pm-client" placeholder="e.g. Priya &amp; Arun">
+          </div>
+          <div class="form-group">
+            <label for="pm-location">Location / Venue</label>
+            <input type="text" id="pm-location" placeholder="e.g. Coimbatore, Tamil Nadu">
+          </div>
+          <div class="form-group">
+            <label for="pm-date">Date / Year</label>
+            <input type="text" id="pm-date" placeholder="e.g. December 2025">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pm-story">Story Behind the Shot</label>
+          <textarea id="pm-story" rows="3" placeholder="Describe the lighting, candid moment, sacred rituals, or creative vision…"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="pm-alt">SEO Image Alt Text</label>
+          <input type="text" id="pm-alt" placeholder="e.g. Traditional South Indian bride portrait by Imagix Studio">
+        </div>
+
+        <div class="form-row form-row-center">
+          <label class="checkbox-label">
+            <input type="checkbox" id="pm-cover">
+            <span>Set as Primary Cover for this category ★</span>
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" id="cancel-photo-modal">Cancel</button>
+          <button type="submit" class="btn btn-gold" id="save-photo-modal-btn">
+            <span>Save Photograph</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/assets/admin.js"></script>
+</body>
+</html>

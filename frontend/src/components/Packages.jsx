@@ -1,26 +1,32 @@
 import React from 'react';
 import { PACKAGES } from '../data/photographyData';
 
-export default function Packages() {
+export default function Packages({ content }) {
+  const eyebrow = content?.eyebrow || 'A GOOD PLACE TO START 04 / 06';
+  const headingLead = content?.headingLead || 'Room for';
+  const headingAccent = content?.headingAccent || 'your story.';
+  const subtitle = content?.subtitle || 'Every celebration has its own cadence and style. Here are our starting curations; we tailor final coverage to your unique plans.';
+  const note = content?.note || 'All collections include color correction, high-resolution downloads, and an online client gallery.';
+  const packagesList = content?.packages || PACKAGES;
+
   return (
     <section className="packages-section section-pad" id="packages">
       <div className="section-heading">
         <div data-reveal>
           <div className="eyebrow">
-            A GOOD PLACE TO START <span>04 / 06</span>
+            {eyebrow}
           </div>
           <h2>
-            Room for <em>your story.</em>
+            {headingLead} <em>{headingAccent}</em>
           </h2>
         </div>
         <p>
-          Every celebration has its own cadence and style. Here are our starting
-          curations; we tailor final coverage to your unique plans.
+          {subtitle}
         </p>
       </div>
 
       <div className="package-grid">
-        {PACKAGES.map((pkg) => (
+        {packagesList.map((pkg) => (
           <article
             key={pkg.eyebrow}
             className={`package-card ${pkg.featured ? 'featured' : ''}`}
@@ -47,7 +53,7 @@ export default function Packages() {
       </div>
 
       <p className="package-note">
-        All collections include color correction, high-resolution downloads, and an online client gallery.
+        {note}
       </p>
     </section>
   );

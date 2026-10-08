@@ -1,9 +1,16 @@
 import React, { useRef, useState } from 'react';
 
-export default function CinemaReel() {
+export default function CinemaReel({ content }) {
   const videoRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+
+  const eyebrow = content?.eyebrow || 'CINEMATIC STORIES 03 / 06';
+  const headingLead = content?.headingLead || 'Stories that';
+  const headingAccent = content?.headingAccent || 'move.';
+  const description = content?.description || 'Photography freezes the tender second; cinema preserves the rhythm of laughter, the tremor in a vow, and the timeless emotion that makes your celebration alive.';
+  const videoUrl = content?.videoUrl || '/assets/studio/imagix-studio-reel.mp4';
+  const posterUrl = content?.posterUrl || '/assets/studio/model-signature-bridal.webp';
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -33,14 +40,13 @@ export default function CinemaReel() {
     <section className="cinema-section section-pad" id="cinema">
       <div className="cinema-header" data-reveal>
         <div className="eyebrow">
-          CINEMATIC STORIES <span>03 / 06</span>
+          {eyebrow}
         </div>
         <h2>
-          Stories that <em>move.</em>
+          {headingLead} <em>{headingAccent}</em>
         </h2>
         <p>
-          Photography freezes the tender second; cinema preserves the rhythm of laughter,
-          the tremor in a vow, and the timeless emotion that makes your celebration alive.
+          {description}
         </p>
       </div>
 
@@ -50,8 +56,8 @@ export default function CinemaReel() {
         <div className="cinema-frame">
           <video
             ref={videoRef}
-            src="/assets/studio/imagix-studio-reel.mp4"
-            poster="/assets/studio/model-signature-bridal.webp"
+            src={videoUrl}
+            poster={posterUrl}
             autoPlay
             loop
             muted={isMuted}
@@ -70,39 +76,42 @@ export default function CinemaReel() {
 
             <div className="cinema-controls">
               <button
-                className="cinema-btn cinema-play-btn"
+                type="button"
+                className="cinema-btn"
                 onClick={togglePlay}
-                aria-label={isPlaying ? 'Pause studio reel' : 'Play studio reel'}
+                aria-label={isPlaying ? 'Pause film' : 'Play film'}
               >
-                {isPlaying ? '⏸ PAUSE' : '▶ PLAY'}
+                {isPlaying ? '❚❚' : '▶'}
               </button>
 
               <button
-                className="cinema-btn cinema-audio-btn"
+                type="button"
+                className="cinema-btn"
                 onClick={toggleMute}
-                aria-label={isMuted ? 'Unmute studio audio' : 'Mute studio audio'}
+                aria-label={isMuted ? 'Unmute cinema audio' : 'Mute audio'}
               >
-                {isMuted ? '🔇 SOUND OFF' : '🔊 SOUND ON'}
+                {isMuted ? '🔇' : '🔊'}
               </button>
 
               <button
-                className="cinema-btn cinema-fs-btn"
+                type="button"
+                className="cinema-btn"
                 onClick={handleFullscreen}
-                aria-label="View reel fullscreen"
+                aria-label="View film fullscreen"
               >
-                ⛶ FULLSCREEN
+                ⛶
               </button>
             </div>
           </div>
         </div>
 
-        <div className="cinema-caption-row">
-          <div>
-            <strong>OFFICIAL IMAGIX STUDIO REEL</strong>
-            <span>Featuring Real Wedding Moments &amp; High Fashion Model Sessions</span>
+        <div className="cinema-footer">
+          <div className="cinema-meta-left">
+            <span className="cinema-dot" />
+            <span className="cinema-meta-text">HEIRLOOM WEDDING &amp; MOTION FILM ARCHIVE</span>
           </div>
-          <a className="pill pill-accent" href="#contact">
-            Book Cinematic Coverage <span>→</span>
+          <a href="#contact" className="cinema-link">
+            Commission a Cinema Film <span>↗</span>
           </a>
         </div>
       </div>

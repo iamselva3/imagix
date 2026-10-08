@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
 import { TESTIMONIALS } from '../data/photographyData';
 
-export default function Testimonials() {
+export default function Testimonials({ content }) {
   const [current, setCurrent] = useState(0);
-  const item = TESTIMONIALS[current];
+  const list = (content?.list && content.list.length > 0) ? content.list : TESTIMONIALS;
+  const safeCurrent = Math.min(current, list.length - 1);
+  const item = list[safeCurrent] || list[0];
 
   const handlePrev = () => {
-    setCurrent((prev) => (prev + TESTIMONIALS.length - 1) % TESTIMONIALS.length);
+    setCurrent((prev) => (prev + list.length - 1) % list.length);
   };
 
   const handleNext = () => {
-    setCurrent((prev) => (prev + 1) % TESTIMONIALS.length);
+    setCurrent((prev) => (prev + 1) % list.length);
   };
+
+  if (!item) return null;
 
   return (
     <section className="testimonial-section" aria-label="Client testimonials">
@@ -43,8 +47,8 @@ export default function Testimonials() {
             ←
           </button>
           <span>
-            {String(current + 1).padStart(2, '0')} <i>/</i>{' '}
-            {String(TESTIMONIALS.length).padStart(2, '0')}
+            {String(safeCurrent + 1).padStart(2, '0')} <i>/</i>{' '}
+            {String(list.length).padStart(2, '0')}
           </span>
           <button
             type="button"

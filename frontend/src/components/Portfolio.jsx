@@ -4,9 +4,16 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { CATEGORIES } from '../data/photographyData';
 
-export default function Portfolio({ photos = [], onImageLoad, onSelectCategory }) {
+export default function Portfolio({ photos = [], onImageLoad, onSelectCategory, content }) {
   const stageRef = useRef(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
+
+  const eyebrow = content?.eyebrow || 'A QUICK GLANCE 02 / 06';
+  const heading = content?.heading || 'Stories worth keeping.';
+  const categoriesList =
+    Array.isArray(content?.categories) && content.categories.length > 0
+      ? content.categories
+      : CATEGORIES;
 
   useGSAP(
     () => {
@@ -115,16 +122,16 @@ export default function Portfolio({ photos = [], onImageLoad, onSelectCategory }
       <div className="portfolio-intro section-pad">
         <div data-reveal>
           <div className="eyebrow">
-            THE SIGNATURE WORK <span>01 / 06</span>
+            {eyebrow}
           </div>
           <h2>
-            Stories worth <em>keeping.</em>
+            {heading}
           </h2>
         </div>
 
         {/* Quick Chapter Navigation Tabs */}
         <div className="portfolio-tabs" role="tablist" aria-label="Portfolio chapters">
-          {CATEGORIES.map((cat, idx) => (
+          {categoriesList.map((cat, idx) => (
             <button
               key={cat.name}
               role="tab"
@@ -140,20 +147,32 @@ export default function Portfolio({ photos = [], onImageLoad, onSelectCategory }
       </div>
 
       <div className="portfolio-stage" ref={stageRef}>
-        {CATEGORIES.map((category, index) => {
-          const categoryPhotos = photos.filter((p) => p.category === category.name);
+        {categoriesList.map((category, index) => {
+          const defaultCat =
+            CATEGORIES[index] ||
+            CATEGORIES.find((c) => c.name === category.name) ||
+            {};
+          const catName = category.name || defaultCat.name || `Category ${index + 1}`;
+          const catEyebrow = category.eyebrow || defaultCat.eyebrow || '';
+          const catTitle = category.title || defaultCat.title || '';
+          const catTagline = category.tagline || defaultCat.tagline || '';
+          const catVideoUrl = category.videoUrl || defaultCat.videoUrl;
+          const catCoverImage = category.coverImage || defaultCat.coverImage;
+          const catDetailImage = category.detailImage || defaultCat.detailImage;
+
+          const categoryPhotos = photos.filter((p) => p.category === catName);
           const coverPhoto =
             categoryPhotos.find((p) => p.isCover) || categoryPhotos[0];
-          const mainImage = coverPhoto?.url || category.coverImage;
+          const mainImage = coverPhoto?.url || catCoverImage;
           const detailPhoto =
             categoryPhotos.find((p) => p.id !== coverPhoto?.id) || categoryPhotos[1];
           const subImage =
-            detailPhoto?.thumbnailUrl || detailPhoto?.url || category.detailImage;
+            detailPhoto?.thumbnailUrl || detailPhoto?.url || catDetailImage;
 
           return (
             <article
               className={`portfolio-card ${index === activeCardIndex ? 'current' : ''}`}
-              key={category.name}
+              key={catName}
               data-index={index}
             >
               {/* Left/Center Visual Canvas */}
@@ -194,16 +213,16 @@ export default function Portfolio({ photos = [], onImageLoad, onSelectCategory }
 
               {/* Right Narrative Card with Solid Backing */}
               <div className="portfolio-copy">
-                <div className="eyebrow">{category.eyebrow}</div>
-                <h3>{category.title}</h3>
-                <p>{category.tagline}</p>
+                <div className="eyebrow">{catEyebrow}</div>
+                <h3>{catTitle}</h3>
+                <p>{catTagline}</p>
                 <div className="portfolio-actions">
                   <a
                     className="pill pill-accent"
                     href="#gallery"
-                    onClick={() => handleSeeWork(category.name)}
+                    onClick={() => handleSeeWork(catName)}
                   >
-                    Explore {category.name} <span>↗</span>
+                    Explore {catName} <span>↗</span>
                   </a>
                   <a
                     className="line-link"

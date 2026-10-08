@@ -8,11 +8,15 @@ gsap.registerPlugin(Flip);
 
 const FILTER_TABS = ['All', ...CATEGORIES.map((c) => c.name)];
 
-export default function Gallery({ photos = [], onImageLoad, selectedCategory, onCategoryChange }) {
+export default function Gallery({ photos = [], onImageLoad, selectedCategory, onCategoryChange, content }) {
   const [filter, setFilter] = useState(selectedCategory || 'All');
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const gridRef = useRef(null);
   const previousFlipState = useRef(null);
+
+  const eyebrow = content?.eyebrow || 'THE GALLERY 02 / 06';
+  const heading = content?.heading || 'A little peek.';
+  const subheading = content?.subheading || 'Real laughter, quiet tears, and timeless frames from couples and families who trusted us with their sacred moments.';
 
   // Sync if parent updates selectedCategory
   useEffect(() => {
@@ -97,15 +101,14 @@ export default function Gallery({ photos = [], onImageLoad, selectedCategory, on
       <div className="section-heading">
         <div data-reveal>
           <div className="eyebrow">
-            THE GALLERY <span>02 / 06</span>
+            {eyebrow}
           </div>
           <h2>
-            A little <em>peek.</em>
+            {heading}
           </h2>
         </div>
         <p>
-          Real laughter, quiet tears, and timeless frames from couples and families who
-          trusted us with their sacred moments.
+          {subheading}
         </p>
       </div>
 

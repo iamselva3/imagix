@@ -149,25 +149,29 @@
     </g>
   </g>
 
-  <!-- SUBTITLE: — P H O T O G R A P H Y — -->
-  <g class="logo-subline" transform="translate(0, 196)">
-    <!-- Left Rule Line -->
-    <line x1="64" y1="0" x2="160" y2="0" stroke="url(#goldMetallic)" stroke-width="1.6" stroke-linecap="round" />
-    <circle cx="160" cy="0" r="1.5" fill="url(#goldMetallic)" />
+  <!-- SUBTITLE: · PHOTOGRAPHY · centered directly at the bottom of IMAGIX -->
+  <g class="logo-subline">
+    <!-- Left Diamond Glint -->
+    <g transform="translate(214, 209)">
+      <path d="M 0 -3.5 L 2.8 0 L 0 3.5 L -2.8 0 Z" fill="url(#goldMetallic)" />
+      <circle cx="0" cy="0" r="1.1" fill="#FFFFFF" opacity="0.95" />
+    </g>
 
     <!-- Center Word -->
-    <text x="340" y="4"
+    <text x="324" y="214"
           fill="url(#goldMetallic)"
-          font-family="'Inter Tight', 'DM Sans', sans-serif"
-          font-size="13"
+          font-family="'Inter Tight', 'DM Sans', -apple-system, sans-serif"
+          font-size="12"
           font-weight="700"
-          letter-spacing="10"
+          letter-spacing="8"
           text-anchor="middle">
       PHOTOGRAPHY
     </text>
 
-    <!-- Right Rule Line -->
-    <circle cx="520" cy="0" r="1.5" fill="url(#goldMetallic)" />
-    <line x1="520" y1="0" x2="616" y2="0" stroke="url(#goldMetallic)" stroke-width="1.6" stroke-linecap="round" />
+    <!-- Right Diamond Glint -->
+    <g transform="translate(434, 209)">
+      <path d="M 0 -3.5 L 2.8 0 L 0 3.5 L -2.8 0 Z" fill="url(#goldMetallic)" />
+      <circle cx="0" cy="0" r="1.1" fill="#FFFFFF" opacity="0.95" />
+    </g>
   </g>
 </svg>

@@ -4,8 +4,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { PROCESS_STEPS } from '../data/photographyData';
 
-export default function Process() {
+export default function Process({ content }) {
   const rootRef = useRef(null);
+
+  const eyebrow = content?.eyebrow || 'EASY AS IT SHOULD BE 03 / 06';
+  const headingLead = content?.headingLead || 'From hello to';
+  const headingAccent = content?.headingAccent || 'heartfelt.';
+  const description = content?.description || 'Great photographs start with feeling understood and completely at ease. Here is how we bring your story to life, step by step.';
+  const steps = content?.steps || PROCESS_STEPS;
 
   useGSAP(
     () => {
@@ -52,14 +58,13 @@ export default function Process() {
     <section className="process-section section-pad" id="process" ref={rootRef}>
       <div className="process-heading" data-reveal>
         <div className="eyebrow">
-          EASY AS IT SHOULD BE <span>03 / 06</span>
+          {eyebrow}
         </div>
         <h2>
-          From hello to <em>heartfelt.</em>
+          {headingLead} <em>{headingAccent}</em>
         </h2>
         <p>
-          Great photographs start with feeling understood and completely at ease.
-          Here is how we bring your story to life, step by step.
+          {description}
         </p>
       </div>
 
@@ -68,7 +73,7 @@ export default function Process() {
           <i />
         </div>
 
-        {PROCESS_STEPS.map((step) => (
+        {steps.map((step) => (
           <article className="process-row" key={step.num}>
             <span className="process-num">{step.num}</span>
             <div className="process-content">

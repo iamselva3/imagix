@@ -57,6 +57,7 @@ export default function Header({ theme = 'light', onToggleTheme }) {
       <header className={`header ${scrolled ? 'is-scrolled' : ''}`}>
         <a className="brand" href="#home" aria-label="Imagix Photography home">
           <img
+            className="brand-logo"
             src={theme === 'dark' ? '/assets/imagix-gold-lockup-light.svg' : '/assets/imagix-gold-lockup-dark.svg'}
             alt="Imagix Photography"
             width="160"

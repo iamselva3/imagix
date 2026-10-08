@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
-export default function Splash({ onDone }) {
+export default function Splash({ onDone, onReveal }) {
   const rootRef = useRef(null);
 
   useGSAP(
@@ -19,6 +19,7 @@ export default function Splash({ onDone }) {
       if (prefersReduced) {
         sessionStorage.setItem('imagix-intro-seen', '1');
         if (targetLogo) gsap.set(targetLogo, { opacity: 1 });
+        if (onReveal) onReveal();
         onDone();
         return;
       }
@@ -151,10 +152,20 @@ export default function Splash({ onDone }) {
               deltaY = targetCenterY - startCenterY;
             }
 
-            // Dissolve dark splash curtain to reveal full website underneath
+            // Immediately notify App that reveal transition has begun
+            if (onReveal) {
+              onReveal();
+            }
+
+            // Release pointer blocking so underlying interactive page awakens
+            if (rootRef.current) {
+              rootRef.current.style.pointerEvents = 'none';
+            }
+
+            // Dissolve dark splash curtain to reveal full website underneath with pure velvet ease
             gsap.to('.splash-backdrop', {
               opacity: 0,
-              duration: 1.25,
+              duration: 1.35,
               ease: 'power2.inOut',
             });
 
@@ -163,7 +174,7 @@ export default function Splash({ onDone }) {
               x: deltaX,
               y: deltaY,
               scale: scaleRatio,
-              duration: 1.25,
+              duration: 1.35,
               ease: 'power3.inOut',
               transformOrigin: 'center center',
             });
@@ -172,16 +183,16 @@ export default function Splash({ onDone }) {
             if (destLogo) {
               gsap.to(destLogo, {
                 opacity: 1,
-                duration: 0.25,
-                delay: 1.05,
+                duration: 0.28,
+                delay: 1.15,
                 ease: 'power1.inOut',
               });
             }
 
             gsap.to(logoWrap, {
               opacity: 0,
-              duration: 0.25,
-              delay: 1.1,
+              duration: 0.28,
+              delay: 1.18,
               ease: 'power1.inOut',
               onComplete() {
                 sessionStorage.setItem('imagix-intro-seen', '1');
@@ -194,8 +205,8 @@ export default function Splash({ onDone }) {
           null,
           3.6
         )
-        // Keep timeline active through the 1.45s travel duration
-        .to({}, { duration: 1.45 }, 3.6);
+        // Keep timeline active through the 1.55s travel duration
+        .to({}, { duration: 1.55 }, 3.6);
 
       return () => {
         tl.kill();
@@ -203,7 +214,7 @@ export default function Splash({ onDone }) {
         if (dest) gsap.set(dest, { opacity: 1 });
       };
     },
-    { scope: rootRef, dependencies: [onDone] }
+    { scope: rootRef, dependencies: [onDone, onReveal] }
   );
 
   return (
@@ -215,7 +226,7 @@ export default function Splash({ onDone }) {
           <div className="splash-logo-glow" />
           <svg
             className="imagix-splash-logo"
-            viewBox="0 0 680 250"
+            viewBox="0 0 680 255"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -338,26 +349,32 @@ export default function Splash({ onDone }) {
               <path d="M 16 -12 L 16 4 M 8 -4 L 24 -4" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
             </g>
 
-            {/* Subline — PHOTOGRAPHY — */}
-            <g className="logo-subline" transform="translate(0, 198)">
-              <line x1="64" y1="0" x2="160" y2="0" stroke="url(#splashGold)" strokeWidth="1.8" strokeLinecap="round" />
-              <circle cx="160" cy="0" r="1.8" fill="url(#splashGold)" />
+            {/* Subline: · PHOTOGRAPHY · centered directly at the bottom of IMAGIX */}
+            <g className="logo-subline">
+              {/* Left Diamond Glint */}
+              <g transform="translate(214, 209)">
+                <path d="M 0 -3.5 L 2.8 0 L 0 3.5 L -2.8 0 Z" fill="url(#splashGold)" />
+                <circle cx="0" cy="0" r="1.1" fill="#FFFFFF" opacity="0.95" />
+              </g>
 
               <text
-                x="340"
-                y="4.5"
+                x="324"
+                y="214"
                 fill="url(#splashGold)"
-                fontFamily="'Inter Tight', 'DM Sans', sans-serif"
-                fontSize="13"
+                fontFamily="'Inter Tight', 'DM Sans', -apple-system, sans-serif"
+                fontSize="12"
                 fontWeight="700"
-                letterSpacing="10"
+                letterSpacing="8"
                 textAnchor="middle"
               >
                 PHOTOGRAPHY
               </text>
 
-              <circle cx="520" cy="0" r="1.8" fill="url(#splashGold)" />
-              <line x1="520" y1="0" x2="616" y2="0" stroke="url(#splashGold)" strokeWidth="1.8" strokeLinecap="round" />
+              {/* Right Diamond Glint */}
+              <g transform="translate(434, 209)">
+                <path d="M 0 -3.5 L 2.8 0 L 0 3.5 L -2.8 0 Z" fill="url(#splashGold)" />
+                <circle cx="0" cy="0" r="1.1" fill="#FFFFFF" opacity="0.95" />
+              </g>
             </g>
           </svg>
         </div>
