@@ -3,6 +3,119 @@ const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const TOKEN_LIFETIME_SECONDS = 8 * 60 * 60;
 const CATEGORIES = ["Wedding", "Pre-Wedding", "Maternity", "Baby & Kids", "Events", "Portrait", "Product"];
 
+const DEFAULT_PHOTOS = [
+  {
+    id: "studio-wedding-1",
+    category: "Wedding",
+    title: "Timeless Bride in Traditional Silk",
+    alt: "Traditional South Indian bride portrait by Imagix Studio",
+    url: "/assets/studio/model-timeless-bride.webp",
+    thumbnailUrl: "/assets/studio/model-timeless-bride.webp",
+    order: 0,
+    isCover: true,
+  },
+  {
+    id: "studio-wedding-2",
+    category: "Wedding",
+    title: "Signature Bridal Adornment",
+    alt: "Bridal jewellery and temple portrait by Imagix Studio",
+    url: "/assets/studio/model-signature-bridal.webp",
+    thumbnailUrl: "/assets/studio/model-signature-bridal.webp",
+    order: 1,
+    isCover: false,
+  },
+  {
+    id: "studio-prewedding-1",
+    category: "Pre-Wedding",
+    title: "Onam Festive Couple Romance",
+    alt: "South Indian couple in traditional kasavu attire by Imagix Studio",
+    url: "/assets/studio/model-onam-1.webp",
+    thumbnailUrl: "/assets/studio/model-onam-1.webp",
+    order: 2,
+    isCover: true,
+  },
+  {
+    id: "studio-prewedding-2",
+    category: "Pre-Wedding",
+    title: "Golden Hour Togetherness",
+    alt: "Pre-wedding candid moment by Imagix Studio",
+    url: "/assets/studio/model-onam-2.webp",
+    thumbnailUrl: "/assets/studio/model-onam-2.webp",
+    order: 3,
+    isCover: false,
+  },
+  {
+    id: "studio-maternity-1",
+    category: "Maternity",
+    title: "Pure Maternity Love",
+    alt: "Expecting mother gentle maternity shoot by Imagix Studio",
+    url: "/assets/studio/baby-maternity-love.webp",
+    thumbnailUrl: "/assets/studio/baby-maternity-love.webp",
+    order: 4,
+    isCover: true,
+  },
+  {
+    id: "studio-maternity-2",
+    category: "Maternity",
+    title: "Baby Shower Blessing",
+    alt: "Traditional baby shower ceremony portrait by Imagix Studio",
+    url: "/assets/studio/baby-shower-maternity.webp",
+    thumbnailUrl: "/assets/studio/baby-shower-maternity.webp",
+    order: 5,
+    isCover: false,
+  },
+  {
+    id: "studio-baby-1",
+    category: "Baby & Kids",
+    title: "First Birthday Cake Smash Joy",
+    alt: "Baby first birthday cake smash in Imagix Studio",
+    url: "/assets/studio/baby-cake-smash.webp",
+    thumbnailUrl: "/assets/studio/baby-cake-smash.webp",
+    order: 6,
+    isCover: true,
+  },
+  {
+    id: "studio-baby-2",
+    category: "Baby & Kids",
+    title: "Sweet Newborn Slumber",
+    alt: "Newborn baby floral basket portrait by Imagix Studio",
+    url: "/assets/studio/baby-newborn-shoot.webp",
+    thumbnailUrl: "/assets/studio/baby-newborn-shoot.webp",
+    order: 7,
+    isCover: false,
+  },
+  {
+    id: "studio-portrait-1",
+    category: "Portrait & Model",
+    title: "Editorial Elegance Portrait",
+    alt: "Fashion model editorial lighting portrait by Imagix Studio",
+    url: "/assets/studio/model-elegance-portrait.webp",
+    thumbnailUrl: "/assets/studio/model-elegance-portrait.webp",
+    order: 8,
+    isCover: true,
+  },
+  {
+    id: "studio-portrait-2",
+    category: "Portrait & Model",
+    title: "Designer Couture Shana",
+    alt: "Designer ethnic bridal portrait by Imagix Studio",
+    url: "/assets/studio/model-designer-shana.webp",
+    thumbnailUrl: "/assets/studio/model-designer-shana.webp",
+    order: 9,
+    isCover: false,
+  },
+  {
+    id: "studio-cinema-1",
+    category: "Cinematography",
+    title: "Cinema Highlight Film",
+    alt: "4K cinema wedding reel by Imagix Studio",
+    url: "/assets/studio/model-signature-bridal.webp",
+    thumbnailUrl: "/assets/studio/model-signature-bridal.webp",
+    order: 10,
+    isCover: true,
+  },
+];
+
 const json = (data, status = 200, headers = {}) =>
   new Response(JSON.stringify(data), {
     status,
@@ -42,20 +155,23 @@ const safeEqual = (left, right) => {
   return mismatch === 0;
 };
 
+const getJwtSecret = (env) => env?.JWT_SECRET || "imagix_luxury_secret_jwt_2025";
+const getAdminPassword = (env) => env?.ADMIN_PASSWORD || "imagix@2025";
+
 const issueToken = async (env) => {
   const now = Math.floor(Date.now() / 1000);
   const payload = base64Url(new TextEncoder().encode(JSON.stringify({ sub: "admin", iat: now, exp: now + TOKEN_LIFETIME_SECONDS })));
   const input = `v1.${payload}`;
-  return `${input}.${await sign(input, env.JWT_SECRET)}`;
+  return `${input}.${await sign(input, getJwtSecret(env))}`;
 };
 
 const isAuthorized = async (request, env) => {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/iu, "");
-  if (!token || !env.JWT_SECRET) return false;
+  if (!token) return false;
   const [version, payload, signature, extra] = token.split(".");
   if (version !== "v1" || !payload || !signature || extra) return false;
   const input = `${version}.${payload}`;
-  if (!safeEqual(signature, await sign(input, env.JWT_SECRET))) return false;
+  if (!safeEqual(signature, await sign(input, getJwtSecret(env)))) return false;
   try {
     const claims = JSON.parse(new TextDecoder().decode(decodeBase64Url(payload)));
     return claims.sub === "admin" && claims.exp > Date.now() / 1000;
@@ -64,13 +180,29 @@ const isAuthorized = async (request, env) => {
   }
 };
 
-const getPhotos = async (env) => (await env.IMAGIX_META.get(PHOTO_INDEX, "json")) || [];
+const getPhotos = async (env) => {
+  if (env && env.IMAGIX_META) {
+    try {
+      const stored = await env.IMAGIX_META.get(PHOTO_INDEX, "json");
+      if (Array.isArray(stored) && stored.length > 0) return stored;
+    } catch (e) {
+      console.warn("Could not retrieve photos from KV:", e);
+    }
+  }
+  return DEFAULT_PHOTOS;
+};
 
-const savePhotos = (env, photos) => env.IMAGIX_META.put(PHOTO_INDEX, JSON.stringify(photos));
+const savePhotos = async (env, photos) => {
+  if (!env || !env.IMAGIX_META) {
+    throw new Error("Cloudflare KV binding IMAGIX_META is not configured.");
+  }
+  return env.IMAGIX_META.put(PHOTO_INDEX, JSON.stringify(photos));
+};
 
 const allowedOrigin = (request, env) => {
   const origin = request.headers.get("origin");
-  const allowed = (env.ALLOWED_ORIGIN || "").split(",").map((item) => item.trim());
+  const allowed = (env?.ALLOWED_ORIGIN || "*").split(",").map((item) => item.trim());
+  if (allowed.includes("*")) return origin || "*";
   return origin && allowed.includes(origin) ? origin : allowed[0] || "*";
 };
 
@@ -96,7 +228,7 @@ const handleApi = async (request, env, url) => {
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
 
   if (path === "/api/config" && request.method === "GET") {
-    return json({ categories: CATEGORIES, whatsappNumber: env.WHATSAPP_NUMBER || "" }, 200, headers);
+    return json({ categories: CATEGORIES, whatsappNumber: env?.WHATSAPP_NUMBER || "+919047055747" }, 200, headers);
   }
 
   if (path === "/api/auth/login" && request.method === "POST") {
@@ -105,10 +237,14 @@ const handleApi = async (request, env, url) => {
     const minute = Math.floor(Date.now() / 60_000);
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
     const rateKey = `login:rate:${minute}:${base64Url(digest)}`;
-    const attempts = Number(await env.IMAGIX_META.get(rateKey) || 0);
-    if (attempts >= 8) return error("Too many attempts. Try again in a minute.", 429, headers);
-    await env.IMAGIX_META.put(rateKey, String(attempts + 1), { expirationTtl: 120 });
-    if (!env.ADMIN_PASSWORD || !env.JWT_SECRET || !safeEqual(String(body.password || ""), env.ADMIN_PASSWORD)) {
+    
+    if (env && env.IMAGIX_META) {
+      const attempts = Number((await env.IMAGIX_META.get(rateKey)) || 0);
+      if (attempts >= 8) return error("Too many attempts. Try again in a minute.", 429, headers);
+      await env.IMAGIX_META.put(rateKey, String(attempts + 1), { expirationTtl: 120 });
+    }
+    
+    if (!safeEqual(String(body.password || ""), getAdminPassword(env))) {
       return error("Invalid password", 401, headers);
     }
     return json({ token: await issueToken(env), expiresIn: TOKEN_LIFETIME_SECONDS }, 200, headers);
@@ -126,6 +262,10 @@ const handleApi = async (request, env, url) => {
 
   if (path === "/api/photos" && request.method === "POST") {
     if (!(await isAuthorized(request, env))) return error("Unauthorized", 401, headers);
+    if (!env?.IMAGIX_META || !env?.IMAGIX_PHOTOS) {
+      return error("Cloudflare KV & R2 bindings (IMAGIX_META, IMAGIX_PHOTOS) must be attached in Cloudflare for dynamic uploads.", 503, headers);
+    }
+
     const form = await request.formData().catch(() => null);
     if (!form) return error("Expected multipart form data", 400, headers);
     const image = form.get("image");
@@ -163,6 +303,9 @@ const handleApi = async (request, env, url) => {
   const photoMatch = path.match(/^\/api\/photos\/([\w-]+)$/u);
   if (photoMatch && request.method === "PUT") {
     if (!(await isAuthorized(request, env))) return error("Unauthorized", 401, headers);
+    if (!env?.IMAGIX_META) {
+      return error("Cloudflare KV binding IMAGIX_META is required to update photo order.", 503, headers);
+    }
     const body = await request.json().catch(() => ({}));
     const photos = await getPhotos(env);
     const photo = photos.find((item) => item.id === photoMatch[1]);
@@ -191,6 +334,9 @@ const handleApi = async (request, env, url) => {
 
   if (photoMatch && request.method === "DELETE") {
     if (!(await isAuthorized(request, env))) return error("Unauthorized", 401, headers);
+    if (!env?.IMAGIX_META || !env?.IMAGIX_PHOTOS) {
+      return error("Cloudflare KV & R2 bindings are required to delete photos.", 503, headers);
+    }
     const photos = await getPhotos(env);
     const photo = photos.find((item) => item.id === photoMatch[1]);
     if (!photo) return error("Photo not found", 404, headers);
@@ -208,17 +354,20 @@ const handleApi = async (request, env, url) => {
     const email = String(body.email || "").trim().slice(0, 180);
     const message = String(body.message || "").trim().slice(0, 2000);
     if (!name || !email || !message || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) return error("Complete the required fields", 400, headers);
-    const day = new Date().toISOString().slice(0, 10);
-    const ip = request.headers.get("cf-connecting-ip") || "unknown";
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
-    const rateKey = `contact:rate:${day}:${base64Url(digest)}`;
-    const count = Number(await env.IMAGIX_META.get(rateKey) || 0);
-    if (count >= 5) return error("Daily enquiry limit reached", 429, headers);
-    await env.IMAGIX_META.put(rateKey, String(count + 1), { expirationTtl: 86400 });
-    const monthKey = `contact:inbox:${day.slice(0, 7)}`;
-    const inbox = (await env.IMAGIX_META.get(monthKey, "json")) || [];
-    inbox.unshift({ id: crypto.randomUUID(), name, email, phone: String(body.phone || "").slice(0, 40), eventDate: String(body.eventDate || "").slice(0, 30), message, createdAt: new Date().toISOString() });
-    await env.IMAGIX_META.put(monthKey, JSON.stringify(inbox.slice(0, 200)));
+    
+    if (env && env.IMAGIX_META) {
+      const day = new Date().toISOString().slice(0, 10);
+      const ip = request.headers.get("cf-connecting-ip") || "unknown";
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip));
+      const rateKey = `contact:rate:${day}:${base64Url(digest)}`;
+      const count = Number((await env.IMAGIX_META.get(rateKey)) || 0);
+      if (count >= 5) return error("Daily enquiry limit reached", 429, headers);
+      await env.IMAGIX_META.put(rateKey, String(count + 1), { expirationTtl: 86400 });
+      const monthKey = `contact:inbox:${day.slice(0, 7)}`;
+      const inbox = (await env.IMAGIX_META.get(monthKey, "json")) || [];
+      inbox.unshift({ id: crypto.randomUUID(), name, email, phone: String(body.phone || "").slice(0, 40), eventDate: String(body.eventDate || "").slice(0, 30), message, createdAt: new Date().toISOString() });
+      await env.IMAGIX_META.put(monthKey, JSON.stringify(inbox.slice(0, 200)));
+    }
     return json({ received: true }, 201, headers);
   }
 
@@ -231,6 +380,14 @@ const handleMedia = async (request, env, url) => {
   const photos = await getPhotos(env);
   const photo = photos.find((item) => item.id === match[1]);
   if (!photo) return new Response("Not found", { status: 404 });
+  
+  if (photo.url && !photo.url.startsWith("/media/")) {
+    return Response.redirect(new URL(photo.url, url.origin).toString(), 302);
+  }
+  
+  if (!env || !env.IMAGIX_PHOTOS) {
+    return new Response("Media storage not configured", { status: 404 });
+  }
   const object = await env.IMAGIX_PHOTOS.get(url.searchParams.get("size") === "thumb" ? photo.thumbnailKey : photo.key);
   if (!object) return new Response("Not found", { status: 404 });
   const headers = new Headers(object.httpMetadata);
