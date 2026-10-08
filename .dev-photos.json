@@ -1,0 +1,112 @@
+[
+  {
+    "id": "studio-wedding-1",
+    "category": "Wedding",
+    "title": "Timeless Bride in Traditional Silk",
+    "alt": "Traditional South Indian bride portrait by Imagix Studio",
+    "url": "/assets/studio/model-timeless-bride.webp",
+    "thumbnailUrl": "/assets/studio/model-timeless-bride.webp",
+    "order": 0,
+    "isCover": true
+  },
+  {
+    "id": "studio-wedding-2",
+    "category": "Wedding",
+    "title": "Signature Bridal Adornment",
+    "alt": "Bridal jewellery and temple portrait by Imagix Studio",
+    "url": "/assets/studio/model-signature-bridal.webp",
+    "thumbnailUrl": "/assets/studio/model-signature-bridal.webp",
+    "order": 1,
+    "isCover": false
+  },
+  {
+    "id": "studio-prewedding-1",
+    "category": "Pre-Wedding",
+    "title": "Onam Festive Couple Romance",
+    "alt": "South Indian couple in traditional kasavu attire by Imagix Studio",
+    "url": "/assets/studio/model-onam-1.webp",
+    "thumbnailUrl": "/assets/studio/model-onam-1.webp",
+    "order": 2,
+    "isCover": true
+  },
+  {
+    "id": "studio-prewedding-2",
+    "category": "Pre-Wedding",
+    "title": "Golden Hour Togetherness",
+    "alt": "Pre-wedding candid moment by Imagix Studio",
+    "url": "/assets/studio/model-onam-2.webp",
+    "thumbnailUrl": "/assets/studio/model-onam-2.webp",
+    "order": 3,
+    "isCover": false
+  },
+  {
+    "id": "studio-maternity-1",
+    "category": "Maternity",
+    "title": "Pure Maternity Love",
+    "alt": "Expecting mother gentle maternity shoot by Imagix Studio",
+    "url": "/assets/studio/baby-maternity-love.webp",
+    "thumbnailUrl": "/assets/studio/baby-maternity-love.webp",
+    "order": 4,
+    "isCover": true
+  },
+  {
+    "id": "studio-maternity-2",
+    "category": "Maternity",
+    "title": "Baby Shower Blessing",
+    "alt": "Traditional baby shower ceremony portrait by Imagix Studio",
+    "url": "/assets/studio/baby-shower-maternity.webp",
+    "thumbnailUrl": "/assets/studio/baby-shower-maternity.webp",
+    "order": 5,
+    "isCover": false
+  },
+  {
+    "id": "studio-baby-1",
+    "category": "Baby & Kids",
+    "title": "First Birthday Cake Smash Joy",
+    "alt": "Baby first birthday cake smash in Imagix Studio",
+    "url": "/assets/studio/baby-cake-smash.webp",
+    "thumbnailUrl": "/assets/studio/baby-cake-smash.webp",
+    "order": 6,
+    "isCover": true
+  },
+  {
+    "id": "studio-baby-2",
+    "category": "Baby & Kids",
+    "title": "Sweet Newborn Slumber",
+    "alt": "Newborn baby floral basket portrait by Imagix Studio",
+    "url": "/assets/studio/baby-newborn-shoot.webp",
+    "thumbnailUrl": "/assets/studio/baby-newborn-shoot.webp",
+    "order": 7,
+    "isCover": false
+  },
+  {
+    "id": "studio-portrait-1",
+    "category": "Portrait & Model",
+    "title": "Editorial Elegance Portrait",
+    "alt": "Fashion model editorial lighting portrait by Imagix Studio",
+    "url": "/assets/studio/model-elegance-portrait.webp",
+    "thumbnailUrl": "/assets/studio/model-elegance-portrait.webp",
+    "order": 8,
+    "isCover": true
+  },
+  {
+    "id": "studio-portrait-2",
+    "category": "Portrait & Model",
+    "title": "Designer Couture Shana",
+    "alt": "Designer ethnic bridal portrait by Imagix Studio",
+    "url": "/assets/studio/model-designer-shana.webp",
+    "thumbnailUrl": "/assets/studio/model-designer-shana.webp",
+    "order": 9,
+    "isCover": false
+  },
+  {
+    "id": "studio-cinema-1",
+    "category": "Cinematography",
+    "title": "Cinema Highlight Film",
+    "alt": "4K cinema wedding reel by Imagix Studio",
+    "url": "/assets/studio/model-signature-bridal.webp",
+    "thumbnailUrl": "/assets/studio/model-signature-bridal.webp",
+    "order": 10,
+    "isCover": true
+  }
+]

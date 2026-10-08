@@ -1,0 +1,297 @@
+import React from 'react';
+
+export const CATEGORIES = [
+  {
+    name: 'Wedding',
+    eyebrow: '01 — THE WEDDING DAY',
+    title: 'All the feeling.',
+    tagline: 'The happy tears, the sacred rituals, the quiet hand squeeze only you noticed.',
+    coverImage: '/assets/studio/model-timeless-bride.webp',
+    detailImage: '/assets/studio/model-signature-bridal.webp',
+    images: [
+      '/assets/studio/model-timeless-bride.webp',
+      '/assets/studio/model-signature-bridal.webp',
+      '/assets/studio/model-onam-1.webp',
+      '/assets/studio/model-onam-2.webp',
+    ],
+  },
+  {
+    name: 'Pre-Wedding',
+    eyebrow: '02 — JUST THE TWO OF YOU',
+    title: 'Before the forever.',
+    tagline: 'A little adventure, golden laughter, and room to simply be yourselves.',
+    coverImage: '/assets/studio/model-onam-1.webp',
+    detailImage: '/assets/studio/model-onam-2.webp',
+    images: [
+      '/assets/studio/model-onam-1.webp',
+      '/assets/studio/model-onam-2.webp',
+      '/assets/studio/model-designer-shana.webp',
+    ],
+  },
+  {
+    name: 'Maternity',
+    eyebrow: '03 — A NEW CHAPTER',
+    title: 'Growing love.',
+    tagline: 'For the beautiful in-between, before everything changes in the best way.',
+    coverImage: '/assets/studio/baby-maternity-love.webp',
+    detailImage: '/assets/studio/baby-shower-maternity.webp',
+    images: [
+      '/assets/studio/baby-maternity-love.webp',
+      '/assets/studio/baby-shower-maternity.webp',
+      '/assets/studio/baby-newborn-shoot.webp',
+    ],
+  },
+  {
+    name: 'Baby & Kids',
+    eyebrow: '04 — LITTLE DAYS',
+    title: 'Little wonders.',
+    tagline: 'The messy, magical, blink-and-you-miss-it years kept safe forever.',
+    coverImage: '/assets/studio/baby-cake-smash.webp',
+    detailImage: '/assets/studio/baby-newborn-shoot.webp',
+    images: [
+      '/assets/studio/baby-cake-smash.webp',
+      '/assets/studio/baby-newborn-shoot.webp',
+      '/assets/studio/baby-shower-maternity.webp',
+    ],
+  },
+  {
+    name: 'Portrait & Model',
+    eyebrow: '05 — EDITORIAL ESSENCE',
+    title: 'Unscripted you.',
+    tagline: 'Portraits with a little less posing and a lot more warmth, elegance and personality.',
+    coverImage: '/assets/studio/model-elegance-portrait.webp',
+    detailImage: '/assets/studio/model-designer-shana.webp',
+    images: [
+      '/assets/studio/model-elegance-portrait.webp',
+      '/assets/studio/model-designer-shana.webp',
+      '/assets/studio/model-timeless-bride.webp',
+    ],
+  },
+  {
+    name: 'Cinematography',
+    eyebrow: '06 — MOTION STORIES',
+    title: 'Cinema in motion.',
+    tagline: '4K heirloom motion films that preserve the voices, laughter, and heartbeat of your day.',
+    coverImage: '/assets/studio/model-signature-bridal.webp',
+    detailImage: '/assets/studio/model-onam-2.webp',
+    videoUrl: '/assets/studio/imagix-studio-reel.mp4',
+    isVideo: true,
+    images: [
+      '/assets/studio/model-signature-bridal.webp',
+      '/assets/studio/model-onam-2.webp',
+      '/assets/studio/model-timeless-bride.webp',
+    ],
+  },
+];
+
+export const FALLBACK_PHOTOS = [
+  {
+    id: 'studio-wedding-1',
+    category: 'Wedding',
+    title: 'Timeless Bride in Traditional Silk',
+    alt: 'Traditional South Indian bride portrait by Imagix Studio',
+    url: '/assets/studio/model-timeless-bride.webp',
+    thumbnailUrl: '/assets/studio/model-timeless-bride.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-wedding-2',
+    category: 'Wedding',
+    title: 'Signature Bridal Adornment',
+    alt: 'Bridal jewellery and temple portrait by Imagix Studio',
+    url: '/assets/studio/model-signature-bridal.webp',
+    thumbnailUrl: '/assets/studio/model-signature-bridal.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-prewedding-1',
+    category: 'Pre-Wedding',
+    title: 'Onam Festive Couple Romance',
+    alt: 'South Indian couple in traditional kasavu attire by Imagix Studio',
+    url: '/assets/studio/model-onam-1.webp',
+    thumbnailUrl: '/assets/studio/model-onam-1.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-prewedding-2',
+    category: 'Pre-Wedding',
+    title: 'Golden Hour Togetherness',
+    alt: 'Pre-wedding candid moment by Imagix Studio',
+    url: '/assets/studio/model-onam-2.webp',
+    thumbnailUrl: '/assets/studio/model-onam-2.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-maternity-1',
+    category: 'Maternity',
+    title: 'Pure Maternity Love',
+    alt: 'Expecting mother gentle maternity shoot by Imagix Studio',
+    url: '/assets/studio/baby-maternity-love.webp',
+    thumbnailUrl: '/assets/studio/baby-maternity-love.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-maternity-2',
+    category: 'Maternity',
+    title: 'Baby Shower Blessing',
+    alt: 'Traditional baby shower ceremony portrait by Imagix Studio',
+    url: '/assets/studio/baby-shower-maternity.webp',
+    thumbnailUrl: '/assets/studio/baby-shower-maternity.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-baby-1',
+    category: 'Baby & Kids',
+    title: 'First Birthday Cake Smash Joy',
+    alt: 'Baby first birthday cake smash in Imagix Studio',
+    url: '/assets/studio/baby-cake-smash.webp',
+    thumbnailUrl: '/assets/studio/baby-cake-smash.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-baby-2',
+    category: 'Baby & Kids',
+    title: 'Sweet Newborn Slumber',
+    alt: 'Newborn baby floral basket portrait by Imagix Studio',
+    url: '/assets/studio/baby-newborn-shoot.webp',
+    thumbnailUrl: '/assets/studio/baby-newborn-shoot.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-portrait-1',
+    category: 'Portrait & Model',
+    title: 'Editorial Elegance Portrait',
+    alt: 'Fashion model editorial lighting portrait by Imagix Studio',
+    url: '/assets/studio/model-elegance-portrait.webp',
+    thumbnailUrl: '/assets/studio/model-elegance-portrait.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-portrait-2',
+    category: 'Portrait & Model',
+    title: 'Designer Couture Shana',
+    alt: 'Designer ethnic bridal portrait by Imagix Studio',
+    url: '/assets/studio/model-designer-shana.webp',
+    thumbnailUrl: '/assets/studio/model-designer-shana.webp',
+    sample: false,
+  },
+  {
+    id: 'studio-cinema-1',
+    category: 'Cinematography',
+    title: 'Imagix Studio Cinematic Highlight Reel',
+    alt: 'Heirloom 4K motion wedding film by Imagix Studio',
+    url: '/assets/studio/model-signature-bridal.webp',
+    videoUrl: '/assets/studio/imagix-studio-reel.mp4',
+    isVideo: true,
+    thumbnailUrl: '/assets/studio/model-signature-bridal.webp',
+    sample: false,
+  },
+];
+
+export const STATS = [
+  { icon: '✳', number: 280, suffix: '+', label: 'WEDDINGS' },
+  { icon: '♡', number: 98, suffix: '%', label: 'HAPPY COUPLES' },
+  { icon: '⌁', number: 8, suffix: '+', label: 'YEARS' },
+  { icon: '↗', number: 14, suffix: '+', label: 'CITIES' },
+];
+
+export const HERO_CATEGORIES = [
+  'CANDID',
+  'CINEMATIC',
+  'TRADITIONAL',
+  'PRE-WEDDING',
+  'BABY & KIDS',
+];
+
+export const TESTIMONIALS = [
+  {
+    quote: 'They made our wedding day feel so effortless. When we opened our heirloom gallery, we could literally hear the laughter and feel the blessed tears all over again.',
+    name: 'PRIYA & ARUN',
+    place: 'COIMBATORE',
+    photo: '/assets/studio/model-timeless-bride.webp',
+  },
+  {
+    quote: 'Our pre-wedding and Onam shoot was beyond magic. Every photograph captured our raw happiness without stiff awkward poses.',
+    name: 'MEERA & KARTHIK',
+    place: 'CHENNAI',
+    photo: '/assets/studio/model-onam-1.webp',
+  },
+  {
+    quote: 'From our maternity session to our baby’s first cake smash, Imagix has become our family’s storytellers. Truly priceless memories!',
+    name: 'ANJALI & VIKRAM',
+    place: 'OOTY',
+    photo: '/assets/studio/baby-maternity-love.webp',
+  },
+];
+
+export const PROCESS_STEPS = [
+  {
+    num: '01',
+    lead: 'Share',
+    accent: 'your vision.',
+    description: 'Tell us what you’re celebrating, where you’ll be, and what memories matter most to your heart.',
+  },
+  {
+    num: '02',
+    lead: 'Let’s make',
+    accent: 'a plan.',
+    description: 'We’ll coordinate timeline, golden-hour light, location scouting, and the right photography package.',
+  },
+  {
+    num: '03',
+    lead: 'Be in',
+    accent: 'the moment.',
+    description: 'We guide you gently when needed and stay invisible for the raw, real, unscripted emotions.',
+  },
+  {
+    num: '04',
+    lead: 'Keep it',
+    accent: 'forever.',
+    description: 'Your carefully curated, color-graded heirloom gallery arrives ready to relive, download, and frame.',
+  },
+];
+
+export const PACKAGES = [
+  {
+    eyebrow: 'THE INTIMATE ONE',
+    title: 'Little moments.',
+    text: 'For baby milestones, maternity, cake smash, and intimate portrait sessions.',
+    items: [
+      'Up to 2 hours of studio / outdoor coverage',
+      'One bespoke styled concept location',
+      'Hand-edited high-resolution digital gallery',
+      'Full personal print release',
+      'High-res & web-optimized downloads',
+    ],
+    action: 'Inquire about a session',
+    featured: false,
+  },
+  {
+    eyebrow: 'THE FULL STORY',
+    title: 'All the feeling.',
+    text: 'For wedding days, pre-wedding celebrations, and heirloom bridal films.',
+    items: [
+      'Pre-wedding creative consultation & moodboard',
+      'Full-day dual shooter photo & cinema coverage',
+      'Handcrafted signature color grading & 4K teaser',
+      'Teaser preview gallery within 7 days',
+      'Archival heirloom velvet print album box',
+    ],
+    action: 'Plan your wedding day',
+    featured: true,
+  },
+  {
+    eyebrow: 'EDITORIAL & BRAND',
+    title: 'Work with heart.',
+    text: 'For model portfolios, fashion designers, couture labels, and distinctive brand stories.',
+    items: [
+      'Creative direction & moodboard lighting design',
+      'Studio or on-location production',
+      'Comprehensive high-end retouching library',
+      'Commercial usage license included',
+      'Fast-track delivery turnaround',
+    ],
+    action: 'Book a model shoot',
+    featured: false,
+  },
+];
