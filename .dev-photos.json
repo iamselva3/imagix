@@ -81,7 +81,7 @@
   },
   {
     "id": "studio-maternity-1",
-    "category": "Maternity",
+    "category": "Baby & Kids",
     "title": "Pure Maternity Love",
     "subtitle": "Serene anticipation and gentle maternal embrace",
     "alt": "Expecting mother gentle maternity shoot by Imagix Studio",
@@ -132,7 +132,7 @@
     "url": "/media/studio-baby-1",
     "thumbnailUrl": "/media/studio-baby-1?size=thumb",
     "order": 6,
-    "isCover": true,
+    "isCover": false,
     "width": 1920,
     "height": 2400,
     "localUrl": "/assets/studio/baby-cake-smash.webp",

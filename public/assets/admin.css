@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: dark;
   --bg-app: #080807;
   --bg-sidebar: #0d0d0b;
   --bg-card: #131210;
@@ -25,10 +26,60 @@
   --font-serif: 'Playfair Display', Georgia, serif;
 }
 
+html {
+  color-scheme: dark;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Luxury Dark Scrollbar Styling (Standard & WebKit)
+   -------------------------------------------------------------------------- */
+html,
+body,
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 159, 85, 0.35) #080807;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+  background-color: #080807;
+}
+
+::-webkit-scrollbar-track {
+  background: #080807;
+  border-left: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 159, 85, 0.28);
+  border-radius: 999px;
+  border: 2px solid #080807;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 159, 85, 0.65);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--gold);
+}
+
+::-webkit-scrollbar-corner {
+  background: #080807;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body {
