@@ -11,10 +11,21 @@ export default function Splash({ onDone }) {
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+      const targetLogo =
+        typeof document !== 'undefined'
+          ? document.querySelector('.brand-logo') || document.querySelector('.brand img')
+          : null;
+
       if (prefersReduced) {
         sessionStorage.setItem('imagix-intro-seen', '1');
+        if (targetLogo) gsap.set(targetLogo, { opacity: 1 });
         onDone();
         return;
+      }
+
+      // Hide target logo while splash is active so it doesn't show duplicate during dissolve
+      if (targetLogo) {
+        gsap.set(targetLogo, { opacity: 0 });
       }
 
       // Set initial element states
@@ -25,12 +36,15 @@ export default function Splash({ onDone }) {
       gsap.set('.x-swoosh', { opacity: 0, x: -16 });
       gsap.set('.logo-subline', { opacity: 0, y: 14 });
       gsap.set('.splash-progress i', { scaleX: 0 });
-      gsap.set('.splash-logo-wrap', { scale: 1 });
+      gsap.set('.splash-logo-wrap', { scale: 1, x: 0, y: 0, opacity: 1, transformOrigin: 'center center' });
+      gsap.set('.splash-backdrop', { opacity: 1 });
+      gsap.set('.splash-logo-glow', { opacity: 1 });
       if (rootRef.current) gsap.set(rootRef.current, { opacity: 1 });
 
       const tl = gsap.timeline({
         onComplete: () => {
           sessionStorage.setItem('imagix-intro-seen', '1');
+          if (targetLogo) gsap.set(targetLogo, { opacity: 1 });
           onDone();
         },
       });
@@ -95,43 +109,110 @@ export default function Splash({ onDone }) {
           { scaleX: 1, duration: 2.6, ease: 'power1.inOut' },
           0.4
         )
-        // 8. The Golden Poise: Hold beat so user can appreciate the complete golden logo (~0.85s)
+        // 8. The Golden Poise: Hold beat so user can appreciate the complete golden logo
         .to(
           '.splash-logo-wrap',
-          { scale: 1.015, duration: 0.85, ease: 'sine.inOut' },
+          { scale: 1.015, duration: 0.65, ease: 'sine.inOut' },
           3.0
         )
-        // 9. Velvety Cinema Dissolve Transition out into Hero (1.15s)
+        // 9. Fade out lower status info & progress bar
         .to(
-          '.splash-center, .splash-base',
-          { opacity: 0, y: -18, scale: 1.03, duration: 0.95, ease: 'power2.inOut' },
-          3.85
+          '.splash-base, .splash-progress',
+          { opacity: 0, duration: 0.35, ease: 'power2.in' },
+          3.45
         )
         .to(
-          rootRef.current,
-          {
-            opacity: 0,
-            duration: 1.15,
-            ease: 'power3.inOut',
-            onComplete() {
-              if (rootRef.current) {
-                rootRef.current.classList.add('splash-gone');
-              }
-            },
-          },
-          3.9
-        );
+          '.splash-logo-glow',
+          { opacity: 0, duration: 0.5, ease: 'power2.out' },
+          3.5
+        )
+        // 10. Travel & Reveal: Dissolve the dark background and fly the logo directly to top-left header!
+        .call(
+          () => {
+            const logoWrap = rootRef.current?.querySelector('.splash-logo-wrap');
+            const destLogo =
+              document.querySelector('.brand-logo') || document.querySelector('.brand img');
+            if (!logoWrap) return;
 
-      return () => tl.kill();
+            const startRect = logoWrap.getBoundingClientRect();
+            const targetRect = destLogo ? destLogo.getBoundingClientRect() : null;
+
+            let deltaX = -400;
+            let deltaY = -350;
+            let scaleRatio = 0.28;
+
+            if (targetRect && targetRect.width > 0) {
+              scaleRatio = targetRect.width / startRect.width;
+              const startCenterX = startRect.left + startRect.width / 2;
+              const startCenterY = startRect.top + startRect.height / 2;
+              const targetCenterX = targetRect.left + targetRect.width / 2;
+              const targetCenterY = targetRect.top + targetRect.height / 2;
+              deltaX = targetCenterX - startCenterX;
+              deltaY = targetCenterY - startCenterY;
+            }
+
+            // Dissolve dark splash curtain to reveal full website underneath
+            gsap.to('.splash-backdrop', {
+              opacity: 0,
+              duration: 1.25,
+              ease: 'power2.inOut',
+            });
+
+            // Fly logo from center straight to the navbar top-left corner
+            gsap.to(logoWrap, {
+              x: deltaX,
+              y: deltaY,
+              scale: scaleRatio,
+              duration: 1.25,
+              ease: 'power3.inOut',
+              transformOrigin: 'center center',
+            });
+
+            // Smooth cross-fade handoff as it touches down into the navbar
+            if (destLogo) {
+              gsap.to(destLogo, {
+                opacity: 1,
+                duration: 0.25,
+                delay: 1.05,
+                ease: 'power1.inOut',
+              });
+            }
+
+            gsap.to(logoWrap, {
+              opacity: 0,
+              duration: 0.25,
+              delay: 1.1,
+              ease: 'power1.inOut',
+              onComplete() {
+                sessionStorage.setItem('imagix-intro-seen', '1');
+                if (destLogo) gsap.set(destLogo, { opacity: 1 });
+                if (rootRef.current) rootRef.current.classList.add('splash-gone');
+                onDone();
+              },
+            });
+          },
+          null,
+          3.6
+        )
+        // Keep timeline active through the 1.45s travel duration
+        .to({}, { duration: 1.45 }, 3.6);
+
+      return () => {
+        tl.kill();
+        const dest = document.querySelector('.brand-logo') || document.querySelector('.brand img');
+        if (dest) gsap.set(dest, { opacity: 1 });
+      };
     },
     { scope: rootRef, dependencies: [onDone] }
   );
 
   return (
     <div className="splash-screen" ref={rootRef} aria-hidden="true">
+      <div className="splash-backdrop" />
       <div className="splash-center">
         {/* EXACT GOLD METALLIC IMAGIX CAMERA LOGO */}
         <div className="splash-logo-wrap">
+          <div className="splash-logo-glow" />
           <svg
             className="imagix-splash-logo"
             viewBox="0 0 680 250"

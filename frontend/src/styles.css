@@ -252,16 +252,23 @@ em {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: #090908;
   color: #f7f5ef;
   display: grid;
   place-items: center;
   user-select: none;
-  opacity: 1;
+  pointer-events: auto;
 }
 
 .splash-screen.splash-gone {
   display: none !important;
+}
+
+.splash-backdrop {
+  position: absolute;
+  inset: 0;
+  background: #090908;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .splash-center {
@@ -272,6 +279,9 @@ em {
   width: 100%;
   max-width: 680px;
   padding: 0 20px;
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .splash-logo-wrap {
@@ -281,17 +291,19 @@ em {
   justify-content: center;
   align-items: center;
   position: relative;
+  transform-origin: center center;
+  will-change: transform, opacity;
 }
 
-.splash-logo-wrap::before {
-  content: '';
+.splash-logo-glow {
   position: absolute;
-  width: 320px;
-  height: 220px;
+  width: 340px;
+  height: 240px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(202, 158, 86, 0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(202, 158, 86, 0.22) 0%, transparent 70%);
   filter: blur(40px);
   pointer-events: none;
+  z-index: -1;
 }
 
 .imagix-splash-logo {
