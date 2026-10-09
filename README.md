@@ -1,6 +1,9 @@
 # Imagix Photography
 
-React + Vite frontend served as Cloudflare Worker static assets. The Worker, KV and R2 API handlers remain unchanged. The existing photo admin page is copied into the Vite build without modification.
+> 📘 **Looking for complete project architecture, credentials setup, or past decisions?**  
+> Check out [PROJECT_CONTEXT.md](file:///g:/Projects/Project/imagix/PROJECT_CONTEXT.md) for a comprehensive top-to-bottom master guide designed for all development sessions.
+
+React + Vite frontend served as Cloudflare Worker static assets with live Cloudflare R2 image streaming and KV-backed CMS.
 
 ## Project tree
 

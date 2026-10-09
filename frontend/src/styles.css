@@ -855,9 +855,9 @@ em {
 }
 
 .script-moments {
-  top: 42%;
-  right: -8%;
-  transform: rotate(-7deg);
+  top: 71%;
+  right: -32%;
+  transform: rotate(-5deg);
 }
 
 .portrait-caption {
@@ -2489,8 +2489,8 @@ img[src*='baby-newborn-shoot'] {
   }
 
   .script-moments {
-    right: -12%;
-    top: 45%;
+    right: -22%;
+    top: 70%;
   }
 
   .hero-side {
@@ -2637,9 +2637,9 @@ img[src*='baby-newborn-shoot'] {
   }
 
   .hero-cutout {
-    height: 440px;
+    height: clamp(380px, 50vh, 410px);
     width: auto;
-    max-width: 110%;
+    max-width: 100%;
     margin: 0 auto;
   }
 
@@ -2665,8 +2665,24 @@ img[src*='baby-newborn-shoot'] {
   }
 
   .script-moments {
-    right: 2%;
-    top: 45%;
+    right: 6px;
+    top: 68%;
+    transform: rotate(-3deg);
+    transform-origin: right center;
+  }
+
+  .script-moments .handwriting-draw-mask {
+    padding: 4px 8px 4px 2px;
+  }
+
+  .script-moments .aesthetic-script-word {
+    font-size: clamp(20px, 5.5vw, 26px);
+    padding-right: 4px;
+  }
+
+  .script-moments .aesthetic-flourish {
+    width: 82%;
+    height: 10px;
   }
 
   .portrait-caption {
