@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -6,6 +6,45 @@ import { STATS, HERO_CATEGORIES } from '../data/photographyData';
 import { ScriptCapture, ScriptMoments } from './HandwritingScript';
 
 export const DEFAULT_HERO_CUTOUT = '/assets/hero-couple.png';
+export const DEFAULT_HERO_CUTOUT_ALT = 'Newlywed couple sharing a tender moment';
+
+// The first cutout stays in normal flow (exactly like the original single image);
+// any additional cutouts are stacked on top of it at the same bottom-centre spot.
+const HERO_LEAD = '.hero-cutout:not(.hero-cutout--layer)';
+const CUTOUT_HOLD_MS = 5600; // how long each portrait rests on screen
+const CUTOUT_LOAD_TIMEOUT_MS = 10000;
+
+/**
+ * Ordered list of transparent hero cutouts: `hero.cutouts: [{ url, alt }]`.
+ * Backward compatible — content that only has the legacy `hero.cutoutImage`
+ * string becomes a one-item list.
+ */
+export function normalizeHeroCutouts(hero, fallbackSrc) {
+  const list = Array.isArray(hero?.cutouts)
+    ? hero.cutouts
+        .map((item) => (typeof item === 'string' ? { url: item } : item))
+        .filter((item) => item && typeof item.url === 'string' && item.url.trim())
+        .map((item) => ({
+          url: item.url.trim(),
+          alt: (typeof item.alt === 'string' && item.alt.trim()) || DEFAULT_HERO_CUTOUT_ALT,
+        }))
+    : [];
+  if (list.length) return list;
+  return [{ url: hero?.cutoutImage || fallbackSrc || DEFAULT_HERO_CUTOUT, alt: DEFAULT_HERO_CUTOUT_ALT }];
+}
+
+function waitForImage(img) {
+  if (!img) return Promise.reject(new Error('missing image'));
+  const decode = () => (typeof img.decode === 'function' ? img.decode().catch(() => {}) : undefined);
+  if (img.complete) {
+    return img.naturalWidth > 0 ? Promise.resolve(decode()) : Promise.reject(new Error('broken image'));
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('image timeout')), CUTOUT_LOAD_TIMEOUT_MS);
+    img.addEventListener('load', () => { clearTimeout(timer); resolve(decode()); }, { once: true });
+    img.addEventListener('error', () => { clearTimeout(timer); reject(new Error('broken image')); }, { once: true });
+  });
+}
 
 export default function Hero({
   onImageLoad,
@@ -15,6 +54,8 @@ export default function Hero({
   splashDone = true,
 }) {
   const heroRef = useRef(null);
+  const cutoutRefs = useRef([]);
+  const [activeCutout, setActiveCutout] = useState(0);
 
   const kicker = content?.kicker || 'WEDDING & PORTRAIT PHOTOGRAPHY —';
   const titleLine1 = content?.titleLine1 || 'MOMENTS TODAY.';
@@ -24,7 +65,8 @@ export default function Hero({
   const ctaText = content?.ctaText || 'Book Your Shoot';
   const ctaLink = content?.ctaLink || '#contact';
   const backword = content?.backword || 'IMAGIX';
-  const actualCutout = content?.cutoutImage || cutoutSrc || DEFAULT_HERO_CUTOUT;
+  const cutouts = useMemo(() => normalizeHeroCutouts(content, cutoutSrc), [content, cutoutSrc]);
+  const cutoutSignature = cutouts.map((item) => item.url).join('\n');
   const portraitCaption = content?.portraitCaption || 'REAL PEOPLE · REAL FEELING';
   const specialitiesTitle = content?.specialitiesTitle || 'OUR SPECIALITIES —';
   const specialities = content?.specialities || HERO_CATEGORIES;
@@ -47,7 +89,7 @@ export default function Hero({
             '.hero-book',
             '.hero-title-line > span',
             '.hero-backword',
-            '.hero-cutout',
+            HERO_LEAD,
             '.hero-side',
             '.hero-bottom',
             '.hero-leaf-left',
@@ -70,7 +112,7 @@ export default function Hero({
             '.hero-book',
             '.hero-title-line > span',
             '.hero-backword',
-            '.hero-cutout',
+            HERO_LEAD,
             '.hero-side',
             '.hero-bottom',
             '.hero-leaf-left',
@@ -80,7 +122,7 @@ export default function Hero({
           { opacity: 0 }
         );
         gsap.set('.hero-backword', { y: 40, scale: 0.95, xPercent: -50 });
-        gsap.set('.hero-cutout', { y: 55, scale: 0.94 });
+        gsap.set(HERO_LEAD, { y: 55, scale: 0.94 });
         gsap.set('.hero-title-line > span', { yPercent: 110 });
         gsap.set('.hero-kicker, .hero-description, .hero-book', { y: 24 });
         gsap.set('.hero-side', { x: 25 });
@@ -119,7 +161,7 @@ export default function Hero({
 
       // Cutout couple portrait rises with buttery smoothness
       revealTl.fromTo(
-        '.hero-cutout',
+        HERO_LEAD,
         { opacity: 0, y: 55, scale: 0.94 },
         { opacity: 1, y: 0, scale: 1, duration: 1.4, ease: 'power3.out' },
         0.15
@@ -320,6 +362,178 @@ export default function Hero({
     { scope: heroRef, dependencies: [splashDone], revertOnUpdate: true }
   );
 
+  // 2b. HEADLINE FIT — the two headline lines never wrap (they slide up through masks), so a
+  //     wider admin-chosen display font could be clipped on narrow screens. Only when a line
+  //     would overflow its column is the h1 scaled down just enough; with the default font
+  //     nothing overflows and the stylesheet sizes are left untouched.
+  const titleRef = useRef(null);
+  const titleKey = `${titleLine1}|${titleLine2Em}|${titleLine2Text}`;
+  useLayoutEffect(() => {
+    const h1 = titleRef.current;
+    if (!h1 || typeof window === 'undefined') return undefined;
+    let frame = 0;
+    const measure = () => {
+      h1.style.removeProperty('font-size');
+      const base = parseFloat(getComputedStyle(h1).fontSize) || 0;
+      let ratio = 1;
+      h1.querySelectorAll('.hero-title-line').forEach((line) => {
+        const text = line.firstElementChild;
+        if (!text) return;
+        // the mask clips at the padding edge, so the right padding is still visible room
+        const available = line.clientWidth - parseFloat(getComputedStyle(line).paddingLeft);
+        const needed = text.offsetWidth; // layout width, unaffected by the reveal transforms
+        if (available > 0 && needed > available + 1) ratio = Math.min(ratio, available / needed);
+      });
+      if (ratio < 1 && base) h1.style.fontSize = `${Math.floor(base * ratio * 0.985 * 10) / 10}px`;
+    };
+    const fit = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    measure();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    observer?.observe(h1.parentElement || h1);
+    document.fonts?.addEventListener?.('loadingdone', fit);
+    document.fonts?.ready?.then(fit);
+    window.addEventListener('imagix-typography-change', fit);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      document.fonts?.removeEventListener?.('loadingdone', fit);
+      window.removeEventListener('imagix-typography-change', fit);
+    };
+  }, [titleKey]);
+
+  // 3. MULTI-CUTOUT ROTATION — buttery overlapping crossfade between transparent portraits.
+  //    Only opacity / transform / filter are animated (GPU friendly). The next image is
+  //    fully loaded & decoded before a swap starts, the loop pauses while the tab is hidden
+  //    or the hero is scrolled away, and reduced-motion users get a motion-free crossfade.
+  useEffect(() => {
+    const count = cutouts.length;
+    setActiveCutout(0);
+    if (count < 2 || !splashDone || typeof window === 'undefined') return undefined;
+
+    const nodes = cutoutRefs.current.slice(0, count);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const broken = new Set();
+    let current = 0;
+    let timer = null;
+    let swapTl = null;
+    let swapping = false;
+    let touched = false;
+    let disposed = false;
+    let inView = true;
+
+    const canRun = () => !disposed && !document.hidden && inView;
+
+    const schedule = (delay = CUTOUT_HOLD_MS) => {
+      clearTimeout(timer);
+      if (canRun() && !swapping) timer = setTimeout(swap, delay);
+    };
+
+    async function swap() {
+      if (!canRun() || swapping) return;
+
+      // Pick the next portrait that is not known to be broken.
+      let next = current;
+      for (let step = 1; step < count; step += 1) {
+        const candidate = (current + step) % count;
+        if (!broken.has(candidate)) { next = candidate; break; }
+      }
+      if (next === current) return;
+
+      const incoming = nodes[next];
+      const outgoing = nodes[current];
+      try {
+        await waitForImage(incoming); // preload + decode → no flash / pop mid-fade
+      } catch {
+        broken.add(next);
+        schedule(400);
+        return;
+      }
+      if (!canRun() || swapping) { schedule(); return; }
+
+      swapping = true;
+      touched = true;
+      setActiveCutout(next);
+
+      gsap.set(outgoing, { zIndex: 2 });
+      gsap.set(incoming, { zIndex: 3, transformOrigin: '50% 100%' });
+      gsap.set(outgoing, { transformOrigin: '50% 100%' });
+      outgoing.classList.add('is-swapping');
+      incoming.classList.add('is-swapping');
+
+      swapTl = gsap.timeline({
+        onComplete: () => {
+          outgoing.classList.remove('is-swapping');
+          incoming.classList.remove('is-swapping');
+          current = next;
+          swapping = false;
+          schedule();
+        },
+      });
+
+      if (reduceMotion) {
+        // No movement — just a gentle overlapping dissolve.
+        swapTl
+          .fromTo(incoming, { opacity: 0 }, { opacity: 1, duration: 1.2, ease: 'sine.inOut' }, 0)
+          .to(outgoing, { opacity: 0, duration: 1.2, ease: 'sine.inOut' }, 0.2);
+      } else {
+        // New portrait blooms in (soft scale + de-blur) while the old one lingers,
+        // then melts away — both overlap for most of the 1.5s so no frame is ever empty.
+        swapTl
+          .fromTo(
+            incoming,
+            { opacity: 0, scale: 1.045, y: 14, '--cutout-blur': '10px' },
+            { opacity: 1, scale: 1, y: 0, '--cutout-blur': '0px', duration: 1.5, ease: 'power3.out' },
+            0
+          )
+          .to(
+            outgoing,
+            { opacity: 0, scale: 0.975, y: 6, '--cutout-blur': '8px', duration: 1.3, ease: 'power2.inOut' },
+            0.2
+          );
+      }
+    }
+
+    const onVisibility = () => {
+      if (document.hidden) clearTimeout(timer);
+      else schedule();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    let observer = null;
+    if ('IntersectionObserver' in window && heroRef.current) {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          inView = entry.isIntersecting;
+          if (inView) schedule();
+          else clearTimeout(timer);
+        },
+        { threshold: 0.05 }
+      );
+      observer.observe(heroRef.current);
+    }
+
+    schedule();
+
+    return () => {
+      disposed = true;
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      observer?.disconnect();
+      if (swapTl) swapTl.kill();
+      if (touched) {
+        // Hand the stage back to the lead portrait (CSS keeps the layers hidden).
+        const live = nodes.filter(Boolean);
+        live.forEach((el) => el.classList.remove('is-swapping'));
+        gsap.set(live, { clearProps: 'opacity,transform,transformOrigin,zIndex,--cutout-blur' });
+      }
+    };
+    // cutoutSignature captures every change to the list (order, additions, removals).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cutoutSignature, splashDone]);
+
   return (
     <section className="hero" id="home" ref={heroRef}>
       {/* Ambient background wash & soft warm accent glow */}
@@ -348,7 +562,7 @@ export default function Hero({
           <p className="hero-kicker">
             {kicker} <span>—</span>
           </p>
-          <h1>
+          <h1 ref={titleRef}>
             <span className="hero-title-line">
               <span>{titleLine1}</span>
             </span>
@@ -380,14 +594,33 @@ export default function Hero({
 
           <div className="portrait-glow" />
 
-          <img
-            className="hero-cutout"
-            src={actualCutout}
-            alt="Newlywed couple sharing a tender moment"
-            fetchPriority="high"
-            loading="eager"
-            onLoad={onImageLoad}
-          />
+          {cutouts.map((item, idx) =>
+            idx === 0 ? (
+              <img
+                key="hero-cutout-lead"
+                ref={(el) => { cutoutRefs.current[0] = el; }}
+                className="hero-cutout"
+                src={item.url}
+                alt={item.alt}
+                aria-hidden={cutouts.length > 1 && activeCutout !== 0 ? true : undefined}
+                fetchPriority="high"
+                loading="eager"
+                onLoad={onImageLoad}
+              />
+            ) : (
+              <img
+                key={`hero-cutout-layer-${idx}`}
+                ref={(el) => { cutoutRefs.current[idx] = el; }}
+                className="hero-cutout hero-cutout--layer"
+                src={item.url}
+                alt={item.alt}
+                aria-hidden={activeCutout !== idx ? true : undefined}
+                fetchPriority="low"
+                loading="eager"
+                decoding="async"
+              />
+            )
+          )}
 
           {/* Genuine Cursive SVG Handwriting Components with live screen writing animation */}
           <ScriptCapture />

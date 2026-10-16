@@ -1,3 +1,5 @@
+import { inspectCutoutImage } from "./cutout-validation.js";
+
 const PHOTO_INDEX = "photos:index";
 const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
 const TOKEN_LIFETIME_SECONDS = 8 * 60 * 60;
@@ -225,6 +227,12 @@ const DEFAULT_CONTENT = {
     address: "42 Heritage Lane, Race Course, Coimbatore, Tamil Nadu 641018",
     instagramUrl: "https://instagram.com",
   },
+  typography: {
+    heading: "Playfair Display",
+    body: "DM Sans",
+    display: "Inter Tight",
+    script: "Caveat",
+  },
   hero: {
     kicker: "WEDDING & PORTRAIT PHOTOGRAPHY —",
     titleLine1: "MOMENTS TODAY.",
@@ -235,6 +243,7 @@ const DEFAULT_CONTENT = {
     ctaLink: "#contact",
     backword: "IMAGIX",
     cutoutImage: "/media/hero-couple",
+    cutouts: [{ url: "/media/hero-couple", alt: "Newlywed couple sharing a tender moment" }],
     portraitCaption: "REAL PEOPLE · REAL FEELING",
     specialitiesTitle: "OUR SPECIALITIES —",
     specialities: ["CANDID", "CINEMATIC", "TRADITIONAL", "PRE-WEDDING", "BABY & KIDS"],
@@ -528,19 +537,27 @@ const handleApi = async (request, env, url) => {
     const form = await request.formData().catch(() => null);
     if (!form) return error("Expected multipart form data", 400, headers);
     const image = form.get("image");
-    if (!image) return error("No image provided", 400, headers);
+    if (!image || typeof image === "string") return error("No image provided", 400, headers);
+
+    // Transparent PNG / WebP cutouts only (MIME/extension + signature + alpha channel)
+    const bytes = new Uint8Array(await image.arrayBuffer());
+    const check = inspectCutoutImage(bytes, { type: image.type, name: image.name, size: image.size });
+    if (!check.ok) return error(check.error, check.status, headers);
 
     const id = crypto.randomUUID();
     const key = `hero/hero-${id}.png`;
     const mediaUrl = `/media/hero-${id}`;
 
     if (env?.IMAGIX_PHOTOS) {
-      await env.IMAGIX_PHOTOS.put(key, image.stream(), {
-        httpMetadata: { contentType: image.type || "image/png", cacheControl: "public, max-age=31536000, immutable" },
+      await env.IMAGIX_PHOTOS.put(key, bytes, {
+        httpMetadata: { contentType: check.contentType, cacheControl: "public, max-age=31536000, immutable" },
       });
     }
 
-    if (env?.IMAGIX_META) {
+    // Legacy single-cutout uploads replace hero.cutoutImage immediately. The multi-image
+    // hero manager sends updateContent=false and saves the ordered `hero.cutouts` list itself.
+    const updateContent = String(form.get("updateContent") ?? "true") !== "false";
+    if (updateContent && env?.IMAGIX_META) {
       const content = await getContent(env);
       if (content.hero) {
         content.hero.cutoutImage = mediaUrl;
@@ -548,7 +565,7 @@ const handleApi = async (request, env, url) => {
       }
     }
 
-    return json({ success: true, url: mediaUrl }, 200, headers);
+    return json({ success: true, url: mediaUrl, contentType: check.contentType }, 200, headers);
   }
 
   // 5. Photos Index (GET & POST)
@@ -796,7 +813,8 @@ const handleMedia = async (request, env, url) => {
     if (!env || !env.IMAGIX_PHOTOS) return new Response("Not found", { status: 404 });
     const object = await env.IMAGIX_PHOTOS.get(`hero/hero-${heroId}.png`);
     if (!object) return new Response("Not found", { status: 404 });
-    const headers = new Headers(object.httpMetadata);
+    const headers = new Headers();
+    object.writeHttpMetadata(headers); // proper Content-Type from R2 metadata
     headers.set("cache-control", "public, max-age=31536000, immutable");
     return new Response(request.method === "HEAD" ? null : object.body, { headers });
   }
@@ -816,7 +834,8 @@ const handleMedia = async (request, env, url) => {
   }
   const object = await env.IMAGIX_PHOTOS.get(url.searchParams.get("size") === "thumb" ? photo.thumbnailKey : photo.key);
   if (!object) return new Response("Not found", { status: 404 });
-  const headers = new Headers(object.httpMetadata);
+  const headers = new Headers();
+  object.writeHttpMetadata(headers); // proper Content-Type from R2 metadata
   headers.set("cache-control", "public, max-age=31536000, immutable");
   headers.set("etag", object.httpEtag);
   return new Response(request.method === "HEAD" ? null : object.body, { headers });

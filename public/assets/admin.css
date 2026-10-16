@@ -1308,3 +1308,374 @@ textarea {
   color: #ff9999;
   font-size: 12px;
 }
+
+/* --------------------------------------------------------------------------
+   Hero Cutout Portraits Manager (multiple transparent images)
+   -------------------------------------------------------------------------- */
+.cutout-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cutout-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cutout-item {
+  display: grid;
+  grid-template-columns: 22px 92px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px 10px 8px;
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.cutout-item:hover {
+  border-color: var(--border);
+}
+
+.cutout-item.is-dragging {
+  opacity: 0.45;
+  transform: scale(0.99);
+}
+
+.cutout-item.is-drop-target {
+  border-color: var(--gold);
+  background: rgba(201, 159, 85, 0.07);
+  box-shadow: 0 0 0 3px rgba(201, 159, 85, 0.12);
+}
+
+.cutout-handle {
+  width: 22px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 16px;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+}
+
+.cutout-handle:hover,
+.cutout-handle:focus-visible {
+  color: var(--gold);
+  background: rgba(201, 159, 85, 0.08);
+  outline: none;
+}
+
+.cutout-handle:active {
+  cursor: grabbing;
+}
+
+.cutout-thumb.checkerboard-bg {
+  width: 92px;
+  height: 108px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+}
+
+.cutout-thumb img {
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55));
+}
+
+.cutout-item-body {
+  min-width: 0;
+}
+
+.cutout-item-body label {
+  margin: 8px 0 5px;
+  font-size: 11px;
+}
+
+.cutout-item-body .cutout-alt-input {
+  padding: 8px 11px;
+  font-size: 12.5px;
+}
+
+.cutout-item-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cutout-order {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--gold-light);
+}
+
+.cutout-first-badge {
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #12100a;
+  background: linear-gradient(135deg, #c99f55, #fdeab8);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.cutout-url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.cutout-item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cutout-btn {
+  width: 32px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-main);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cutout-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold-light);
+}
+
+.cutout-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.cutout-btn.cutout-remove:hover:not(:disabled) {
+  border-color: rgba(224, 82, 82, 0.6);
+  color: #ff8a8a;
+  background: rgba(224, 82, 82, 0.12);
+}
+
+.cutout-manager-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cutout-count {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+#cutout-upload-status {
+  min-height: 1.2em;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+#cutout-upload-status[data-tone='success'] {
+  color: var(--success);
+}
+
+#cutout-upload-status[data-tone='danger'] {
+  color: #ff8a8a;
+}
+
+#pv-cutout-img {
+  transition: opacity 0.42s ease, filter 0.42s ease, transform 0.42s ease;
+}
+
+#pv-cutout-img.is-fading {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.mockup-cutout-count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(201, 159, 85, 0.25);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+/* --------------------------------------------------------------------------
+   Website Typography Editor
+   -------------------------------------------------------------------------- */
+.type-roles {
+  display: grid;
+  gap: 16px;
+}
+
+.type-role {
+  padding: 16px 18px;
+  background: var(--bg-input);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.type-role-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.type-role-head label {
+  margin-bottom: 2px;
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+.type-default-chip {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.type-role-usage {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.type-select {
+  cursor: pointer;
+}
+
+.type-sample {
+  margin-top: 12px;
+  padding: 14px 16px;
+  min-height: 64px;
+  border-radius: var(--radius-sm);
+  background: #0f0e0c;
+  border: 1px solid rgba(201, 159, 85, 0.12);
+  color: var(--gold-light);
+  font-size: 26px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.25s ease;
+}
+
+.type-sample.is-loading {
+  opacity: 0.45;
+}
+
+.type-sample-body {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+.type-sample-display {
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  color: var(--text-main);
+}
+
+.type-sample-script {
+  font-size: 34px;
+  font-weight: 700;
+  color: #d89f66;
+}
+
+.type-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.type-status {
+  font-size: 12px;
+  color: var(--gold);
+}
+
+.mockup-type {
+  padding: 28px 26px 26px;
+  background: #fbfaf7;
+  color: #20201f;
+  display: grid;
+  gap: 10px;
+}
+
+.mockup-type-kicker {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: #62655e;
+}
+
+.mockup-type-display {
+  font-size: 34px;
+  font-weight: 850;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: #20201f;
+}
+
+.mockup-type-script {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: #be8251;
+  transform: rotate(-4deg);
+  transform-origin: left center;
+  margin: 2px 0 4px;
+}
+
+.mockup-type-heading {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: #20201f;
+}
+
+.mockup-type-heading em {
+  font-style: italic;
+  font-weight: 500;
+  color: #ab7550;
+}
+
+.mockup-type-body {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #74766f;
+}
+
+.mockup-type-stats {
+  display: flex;
+  gap: 22px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e3de;
+}
+
+.mockup-type-stats b {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #353632;
+}

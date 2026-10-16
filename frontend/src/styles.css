@@ -3,11 +3,20 @@
    ========================================================================== */
 
 :root {
-  /* Typography */
-  --serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --display: 'Inter Tight', 'Archivo Black', -apple-system, BlinkMacSystemFont, sans-serif;
-  --script: 'Caveat', 'Mrs Saint Delafield', cursive;
+  /* Typography — admin-controlled (Admin › Typography). These are the shipped
+     defaults; the client overrides them at runtime on <html> when the studio
+     picks other fonts (see frontend/src/lib/typography.js). Every font-family
+     in this stylesheet must go through one of these four variables. */
+  --font-heading: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Inter Tight', 'Archivo Black', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: 'Caveat', 'Allura', 'Alex Brush', cursive;
+
+  /* Legacy aliases (kept so older rules / overrides keep working) */
+  --serif: var(--font-heading);
+  --sans: var(--font-body);
+  --display: var(--font-display);
+  --script: var(--font-script);
 
   /* Color Palette — Tailored Light Theme */
   --paper: #ffffff;
@@ -66,7 +75,7 @@
 }
 
 html {
-  font-family: var(--sans);
+  font-family: var(--font-body);
   color: var(--ink);
   background: var(--paper);
   scroll-behavior: auto; /* Managed by Lenis */
@@ -159,7 +168,7 @@ img {
 }
 
 em {
-  font-family: var(--serif);
+  font-family: var(--font-heading);
   font-style: italic;
   font-weight: 500;
   color: var(--accent);
@@ -557,12 +566,12 @@ em {
   gap: 16px;
   border-bottom: 1px solid var(--line);
   padding: 16px 0;
-  font: 500 clamp(36px, 9vw, 64px) var(--serif);
+  font: 500 clamp(36px, 9vw, 64px) var(--font-heading);
   color: var(--ink);
 }
 
 .mobile-menu nav small {
-  font: 700 9px var(--sans);
+  font: 700 9px var(--font-body);
   color: var(--accent);
   letter-spacing: 0.15em;
 }
@@ -696,7 +705,7 @@ em {
 }
 
 .hero h1 {
-  font: 850 clamp(25px, 2.8vw, 48px)/1.04 var(--display);
+  font: 850 clamp(25px, 2.8vw, 48px)/1.04 var(--font-display);
   letter-spacing: -0.035em;
   margin: 14px 0 18px;
   position: relative;
@@ -756,7 +765,7 @@ em {
   top: 2%;
   left: 50%;
   transform: translateX(-50%);
-  font: 900 clamp(75px, 11vw, 175px)/0.8 var(--display);
+  font: 900 clamp(75px, 11vw, 175px)/0.8 var(--font-display);
   letter-spacing: 0.02em;
   color: #444540;
   background: linear-gradient(180deg, #323330 6%, #6a6b65 48%, rgba(150, 152, 144, 0.08) 100%);
@@ -797,6 +806,23 @@ em {
   will-change: transform, opacity;
 }
 
+/* Extra rotating cutouts (Admin › Hero list) sit exactly on top of the lead
+   portrait, anchored bottom-centre like the in-flow image, hidden until faded in. */
+.hero-cutout--layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0 auto;
+  opacity: 0;
+}
+
+/* Soft focus is only part of the filter while a crossfade is running */
+.hero-cutout.is-swapping {
+  filter: blur(var(--cutout-blur, 0px)) drop-shadow(0 20px 24px rgba(35, 30, 24, 0.12));
+  will-change: transform, opacity, filter;
+}
+
 /* Luxury Aesthetic Calligraphy Signature with Live Pen Drawing Effect */
 .handwriting-item {
   position: absolute;
@@ -818,7 +844,7 @@ em {
 }
 
 .aesthetic-script-word {
-  font-family: 'Caveat', 'Allura', 'Alex Brush', cursive;
+  font-family: var(--font-script);
   font-size: clamp(42px, 4.8vw, 64px);
   font-weight: 700;
   color: #be8251;
@@ -898,7 +924,7 @@ em {
 }
 
 .hero-side li {
-  font: 800 clamp(13px, 1.25vw, 19px)/2.25 var(--display);
+  font: 800 clamp(13px, 1.25vw, 19px)/2.25 var(--font-display);
   letter-spacing: 0.12em;
   color: #4d4f49;
   transition: color 0.2s ease, transform 0.2s ease;
@@ -996,11 +1022,11 @@ em {
   grid-row: 1 / 3;
   font-size: 18px;
   color: var(--accent);
-  font-family: var(--serif);
+  font-family: var(--font-heading);
 }
 
 .hero-stat strong {
-  font: 700 23px/1 var(--display);
+  font: 700 23px/1 var(--font-display);
   letter-spacing: -0.04em;
   color: #353632;
 }
@@ -1023,13 +1049,13 @@ em {
   position: absolute;
   left: 0;
   top: -12px;
-  font: 44px/1 var(--serif);
+  font: 44px/1 var(--font-heading);
   color: var(--accent-light);
   user-select: none;
 }
 
 .hero-quote p {
-  font: italic 13.5px/1.5 var(--serif);
+  font: italic 13.5px/1.5 var(--font-heading);
   margin: 0 0 6px;
   color: #555750;
 }
@@ -1114,7 +1140,7 @@ em {
 .section-heading h2,
 .process-heading h2,
 .contact-intro h2 {
-  font: 600 clamp(42px, 6.2vw, 84px)/1.06 var(--serif);
+  font: 600 clamp(42px, 6.2vw, 84px)/1.06 var(--font-heading);
   letter-spacing: -0.055em;
   margin: 0;
   max-width: 920px;
@@ -1284,7 +1310,7 @@ em {
 }
 
 .portfolio-copy h3 {
-  font: 600 clamp(38px, 5.2vw, 68px)/1.04 var(--serif);
+  font: 600 clamp(38px, 5.2vw, 68px)/1.04 var(--font-heading);
   letter-spacing: -0.05em;
   margin: 16px 0;
   color: var(--ink);
@@ -1348,7 +1374,7 @@ em {
 }
 
 .portfolio-number strong {
-  font: 600 20px var(--serif);
+  font: 600 20px var(--font-heading);
   color: var(--ink);
   margin-right: 4px;
 }
@@ -1412,7 +1438,7 @@ em {
 }
 
 .cinema-header h2 {
-  font: 500 clamp(42px, 5.5vw, 74px) var(--serif);
+  font: 500 clamp(42px, 5.5vw, 74px) var(--font-heading);
   letter-spacing: -0.03em;
   margin: 12px 0 16px;
   color: var(--ink);
@@ -1596,13 +1622,13 @@ em {
 }
 
 .marquee-word {
-  font: italic 21px var(--serif);
+  font: italic 21px var(--font-heading);
   letter-spacing: 0.08em;
   color: #555750;
 }
 
 .marquee-star {
-  font: 11px var(--sans);
+  font: 11px var(--font-body);
   font-style: normal;
   color: var(--accent);
   margin: 0 28px;
@@ -1740,7 +1766,7 @@ img[src*='baby-newborn-shoot'] {
   right: 18px;
   bottom: 14px;
   color: #ffffff;
-  font: italic 16px var(--serif);
+  font: italic 16px var(--font-heading);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1802,7 +1828,7 @@ img[src*='baby-newborn-shoot'] {
 .lightbox figcaption {
   padding-top: 14px;
   color: var(--accent-light);
-  font: italic 16px var(--serif);
+  font: italic 16px var(--font-heading);
   display: flex;
   gap: 18px;
   align-items: baseline;
@@ -1813,7 +1839,7 @@ img[src*='baby-newborn-shoot'] {
 }
 
 .lightbox figcaption span {
-  font: 11px var(--sans);
+  font: 11px var(--font-body);
   color: #9f9f95;
   letter-spacing: 0.1em;
 }
@@ -1930,7 +1956,7 @@ img[src*='baby-newborn-shoot'] {
 }
 
 .process-content h3 {
-  font: 500 clamp(28px, 3.2vw, 42px) var(--serif);
+  font: 500 clamp(28px, 3.2vw, 42px) var(--font-heading);
   margin: 0 0 8px;
   letter-spacing: -0.04em;
   color: var(--ink);
@@ -1994,13 +2020,13 @@ img[src*='baby-newborn-shoot'] {
 }
 
 .quote-glyph {
-  font: 110px/0.65 var(--serif);
+  font: 110px/0.65 var(--font-heading);
   color: var(--accent-light);
   display: block;
 }
 
 .testimonial-copy blockquote {
-  font: italic clamp(26px, 3.3vw, 44px)/1.35 var(--serif);
+  font: italic clamp(26px, 3.3vw, 44px)/1.35 var(--font-heading);
   letter-spacing: -0.03em;
   margin: 22px 0 25px;
   max-width: 580px;
@@ -2114,7 +2140,7 @@ img[src*='baby-newborn-shoot'] {
 }
 
 .package-card h3 {
-  font: 500 clamp(28px, 3.2vw, 42px) var(--serif);
+  font: 500 clamp(28px, 3.2vw, 42px) var(--font-heading);
   margin: 24px 0 8px;
   letter-spacing: -0.04em;
   color: var(--ink);
@@ -2298,7 +2324,7 @@ img[src*='baby-newborn-shoot'] {
 }
 
 .footer-tagline {
-  font: italic 18px var(--serif);
+  font: italic 18px var(--font-heading);
   color: #74766f;
   margin: 0;
 }
@@ -3352,6 +3378,10 @@ body,
 
 [data-theme='dark'] .hero-cutout {
   filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.65));
+}
+
+[data-theme='dark'] .hero-cutout.is-swapping {
+  filter: blur(var(--cutout-blur, 0px)) drop-shadow(0 20px 32px rgba(0, 0, 0, 0.65));
 }
 
 [data-theme='dark'] .portrait-glow {

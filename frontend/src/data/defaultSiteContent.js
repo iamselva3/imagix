@@ -16,6 +16,13 @@ export const DEFAULT_CONTENT = {
     address: '42 Heritage Lane, Race Course, Coimbatore, Tamil Nadu 641018',
     instagramUrl: 'https://instagram.com',
   },
+  // Admin › Typography (families from public/assets/font-catalog.js)
+  typography: {
+    heading: 'Playfair Display',
+    body: 'DM Sans',
+    display: 'Inter Tight',
+    script: 'Caveat',
+  },
   hero: {
     kicker: 'WEDDING & PORTRAIT PHOTOGRAPHY —',
     titleLine1: 'MOMENTS TODAY.',
@@ -26,6 +33,8 @@ export const DEFAULT_CONTENT = {
     ctaLink: '#contact',
     backword: 'IMAGIX',
     cutoutImage: '/media/hero-couple',
+    // Ordered transparent portraits that crossfade in the hero (first = shown first).
+    cutouts: [{ url: '/media/hero-couple', alt: 'Newlywed couple sharing a tender moment' }],
     portraitCaption: 'REAL PEOPLE · REAL FEELING',
     specialitiesTitle: 'OUR SPECIALITIES —',
     specialities: ['CANDID', 'CINEMATIC', 'TRADITIONAL', 'PRE-WEDDING', 'BABY & KIDS'],

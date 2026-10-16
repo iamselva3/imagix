@@ -5,6 +5,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
+import { inspectCutoutImage } from '../src/cutout-validation.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(here, '..');
@@ -466,6 +467,18 @@ function preserveExistingAdmin() {
         // 2b. Handle /media/ endpoints (pulls directly from Cloudflare R2!)
         if (pathname.startsWith('/media/')) {
           if (pathname.startsWith('/media/hero-')) {
+            // Same key scheme as the Worker: /media/hero-<id> → hero/hero-<id>.png
+            const heroId = pathname.slice('/media/hero-'.length).split('?')[0];
+            if (heroId && heroId !== 'couple' && /^[\w-]+$/.test(heroId)) {
+              const r2Specific = await fetchFromR2FromVite({ key: `hero/hero-${heroId}.png` });
+              if (r2Specific) {
+                const buf = Buffer.from(await r2Specific.arrayBuffer());
+                response.setHeader('Content-Type', r2Specific.headers.get('content-type') || 'image/png');
+                response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+                response.setHeader('X-Storage', 'Cloudflare-R2');
+                return response.end(buf);
+              }
+            }
             const r2Hero = await fetchFromR2FromVite({ key: 'hero/hero-couple.png' });
             if (r2Hero) {
               const buf = Buffer.from(await r2Hero.arrayBuffer());
@@ -597,10 +610,18 @@ function preserveExistingAdmin() {
               return response.end(JSON.stringify({ error: 'No image file provided' }));
             }
 
-            const ext = image.type === 'image/webp' ? '.webp' : '.png';
-            const filename = `hero-cutout-${Date.now()}${ext}`;
-            const dest = path.join(uploadsDir, filename);
+            // Transparent PNG / WebP cutouts only — identical rules to the Worker
             const buffer = Buffer.from(await image.arrayBuffer());
+            const check = inspectCutoutImage(new Uint8Array(buffer), { type: image.type, name: image.name, size: image.size });
+            if (!check.ok) {
+              response.statusCode = check.status;
+              response.setHeader('Content-Type', 'application/json; charset=utf-8');
+              return response.end(JSON.stringify({ error: check.error }));
+            }
+
+            const ext = check.ext;
+            const filename = `hero-cutout-${Date.now()}-${Math.random().toString(36).slice(2, 7)}${ext}`;
+            const dest = path.join(uploadsDir, filename);
             fs.writeFileSync(dest, buffer);
 
             const vars = getDevVars();
@@ -608,13 +629,16 @@ function preserveExistingAdmin() {
 
             if (vars.CLOUDFLARE_ACCOUNT_ID && vars.R2_ACCESS_KEY_ID && vars.R2_SECRET_ACCESS_KEY) {
               const r2HeroKey = `hero/hero-${Date.now()}${ext}`;
-              const ok = await uploadToR2FromVite({ key: r2HeroKey, buffer, contentType: image.type || 'image/png' });
+              const ok = await uploadToR2FromVite({ key: r2HeroKey, buffer, contentType: check.contentType });
               if (ok && vars.R2_PUBLIC_DOMAIN) {
                 relativeUrl = `${vars.R2_PUBLIC_DOMAIN.replace(/\/+$/, '')}/${r2HeroKey}`;
               }
             }
 
-            const currentContent = getDevContent();
+            // Legacy single-cutout uploads replace hero.cutoutImage immediately; the
+            // multi-image hero manager sends updateContent=false and saves the list itself.
+            const updateContent = String(form.get('updateContent') ?? 'true') !== 'false';
+            const currentContent = updateContent ? getDevContent() : null;
             if (currentContent && currentContent.hero) {
               currentContent.hero.cutoutImage = relativeUrl;
               saveDevContent(currentContent);
@@ -622,7 +646,7 @@ function preserveExistingAdmin() {
 
             response.statusCode = 200;
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
-            return response.end(JSON.stringify({ success: true, url: relativeUrl }));
+            return response.end(JSON.stringify({ success: true, url: relativeUrl, contentType: check.contentType }));
           } catch (err) {
             response.statusCode = 500;
             response.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -748,7 +772,17 @@ function preserveExistingAdmin() {
                 if (changes.location !== undefined) photo.location = changes.location;
                 if (changes.date !== undefined) photo.date = changes.date;
                 if (changes.story !== undefined) photo.story = changes.story;
-                if (changes.order !== undefined) photo.order = Number(changes.order);
+                if (changes.order !== undefined && Number.isFinite(Number(changes.order))) {
+                  // Same as the Worker: move the photo to the target slot and renumber 0..n-1
+                  const ordered = photos.sort((left, right) => (left.order || 0) - (right.order || 0));
+                  const currentIndex = ordered.findIndex(item => item.id === photo.id);
+                  if (currentIndex !== -1) {
+                    const [moving] = ordered.splice(currentIndex, 1);
+                    const targetIndex = Math.max(0, Math.min(ordered.length, Math.round(Number(changes.order))));
+                    ordered.splice(targetIndex, 0, moving);
+                    ordered.forEach((item, index) => { item.order = index; });
+                  }
+                }
                 if (changes.isCover !== undefined) {
                   const makeCover = Boolean(changes.isCover);
                   if (makeCover) {

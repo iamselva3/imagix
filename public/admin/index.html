@@ -89,6 +89,10 @@
           <span class="nav-icon">📬</span>
           <span class="nav-label">Contact &amp; Studio</span>
         </button>
+        <button type="button" class="nav-item" data-tab="typography">
+          <span class="nav-icon">🔤</span>
+          <span class="nav-label">Typography</span>
+        </button>
         <button type="button" class="nav-item" data-tab="settings">
           <span class="nav-icon">☁️</span>
           <span class="nav-label">Cloudflare &amp; R2</span>
@@ -191,33 +195,30 @@
                 </div>
               </div>
 
-              <!-- Hero Cutout Image Manager -->
+              <!-- Hero Cutout Portraits Manager (multiple transparent images that crossfade) -->
               <div class="card">
                 <div class="card-head">
-                  <h3>Hero Cutout Portrait (Transparent PNG / WebP)</h3>
-                  <p>Must have <strong>no background</strong> (isolated subject cutout) to blend in front of the giant IMAGIX lettering.</p>
+                  <h3>Hero Cutout Portraits (Transparent PNG / WebP)</h3>
+                  <p>Each portrait must have <strong>no background</strong> (isolated subject cutout) to blend in front of the giant IMAGIX lettering. Add several and they softly crossfade on the website in the order below; a single portrait stays still.</p>
                 </div>
 
-                <div class="cutout-uploader">
-                  <div class="cutout-preview-box">
-                    <div class="checkerboard-bg">
-                      <img id="cutout-preview-img" src="/assets/hero-couple.png" alt="Current hero cutout">
-                    </div>
-                    <div class="cutout-meta">
-                      <span id="cutout-src-label">/assets/hero-couple.png</span>
-                      <button type="button" class="btn btn-small btn-outline" id="reset-cutout-btn">Reset to Default</button>
-                    </div>
+                <div class="cutout-manager">
+                  <ol class="cutout-list" id="cutout-list" aria-label="Hero portraits in display order"></ol>
+
+                  <div class="cutout-manager-bar">
+                    <span class="cutout-count" id="cutout-count">1 portrait</span>
+                    <button type="button" class="btn btn-small btn-outline" id="reset-cutout-btn">Reset to Default</button>
                   </div>
 
                   <div class="cutout-dropzone" id="cutout-dropzone">
                     <div class="drop-icon">🖼️</div>
-                    <h4>Upload New Transparent Cutout</h4>
-                    <p>Drop transparent PNG / WebP here or choose file.<br><small class="text-muted">Tip: Remove background using Photoshop, Remove.bg, or Canva.</small></p>
+                    <h4>Add Transparent Cutouts</h4>
+                    <p>Drop one or more transparent PNG / WebP files here or choose files.<br><small class="text-muted">Images with a solid background are rejected. Tip: remove backgrounds with Photoshop, Remove.bg, or Canva.</small></p>
                     <label class="btn btn-outline btn-file">
-                      <span>Choose Transparent Image</span>
-                      <input type="file" id="cutout-file-input" accept="image/png,image/webp" hidden>
+                      <span>Choose Transparent Images</span>
+                      <input type="file" id="cutout-file-input" accept="image/png,image/webp,.png,.webp" multiple hidden>
                     </label>
-                    <p class="status" id="cutout-upload-status"></p>
+                    <p class="status" id="cutout-upload-status" role="status" aria-live="polite"></p>
                   </div>
                 </div>
               </div>
@@ -249,6 +250,7 @@
                   <div class="mockup-hero-center">
                     <div class="mockup-hero-backword" id="pv-hero-backword">IMAGIX</div>
                     <img id="pv-cutout-img" src="/assets/hero-couple.png" alt="Cutout">
+                    <span class="mockup-cutout-count" id="pv-cutout-count" hidden></span>
                     <div class="mockup-caption" id="pv-hero-caption">REAL PEOPLE · REAL FEELING</div>
                   </div>
                   <div class="mockup-hero-stats" id="pv-hero-stats"></div>
@@ -625,6 +627,45 @@
               <div class="form-group">
                 <label for="footer-copy">Copyright Notice</label>
                 <input type="text" id="footer-copy">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB: TYPOGRAPHY (site-wide fonts) -->
+        <section class="tab-panel" id="panel-typography">
+          <div class="panel-layout">
+            <div class="editor-col">
+              <div class="card">
+                <div class="card-head">
+                  <h3>Website Typography</h3>
+                  <p>Choose the fonts used across the whole client website. The defaults are the studio's current fonts, so nothing changes until you pick something and press <strong>Save Changes</strong>.</p>
+                </div>
+                <div class="type-roles" id="type-roles"></div>
+                <div class="type-actions">
+                  <button type="button" class="btn btn-small btn-outline" id="type-reset-btn">Reset to Studio Defaults</button>
+                  <span class="type-status" id="type-status"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-col">
+              <div class="preview-sticky-card">
+                <div class="preview-card-head">
+                  <span>LIVE TYPE PREVIEW</span>
+                  <span class="preview-badge">Real-time</span>
+                </div>
+                <div class="mockup-type" id="mockup-type">
+                  <div class="mockup-type-kicker" data-type-role="body">WEDDING &amp; PORTRAIT PHOTOGRAPHY —</div>
+                  <div class="mockup-type-display" data-type-role="display" id="pv-type-display">MOMENTS TODAY.</div>
+                  <div class="mockup-type-script" data-type-role="script">Capture</div>
+                  <h2 class="mockup-type-heading" data-type-role="heading">
+                    <span id="pv-type-heading">Life happens in the in-between.</span>
+                    <em data-type-role="heading" id="pv-type-heading-em">That’s where we look.</em>
+                  </h2>
+                  <p class="mockup-type-body" data-type-role="body" id="pv-type-body">From the happy chaos of an early wedding morning to quiet sunset vows, we make photographs that look like fine art and feel like real life.</p>
+                  <div class="mockup-type-stats" data-type-role="display"><b>280+</b><b>98%</b><b>8+</b></div>
+                </div>
               </div>
             </div>
           </div>

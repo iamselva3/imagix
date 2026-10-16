@@ -2,6 +2,16 @@
 // IMAGIX STUDIO MASTER CMS — ADMIN APPLICATION LOGIC
 // ==========================================================================
 
+import {
+  FONT_ROLES,
+  DEFAULT_TYPOGRAPHY,
+  findFont,
+  fontsForRole,
+  fontStack,
+  googleFontsHref,
+  normalizeTypography,
+} from './font-catalog.js';
+
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -19,7 +29,7 @@ const CATEGORIES = [
 const TAB_META = {
   hero: {
     title: 'Hero Section Editor',
-    desc: 'Manage headlines, kicker, stats, and the cutout portrait.',
+    desc: 'Manage headlines, kicker, stats, and the rotating cutout portraits.',
   },
   story: {
     title: 'Story & Philosophy Editor',
@@ -53,6 +63,10 @@ const TAB_META = {
     title: 'Contact & Studio Information',
     desc: 'Update phone, WhatsApp, email, address, and studio hours.',
   },
+  typography: {
+    title: 'Website Typography',
+    desc: 'Pick the heading, body, display and script fonts used across the whole client site.',
+  },
   settings: {
     title: 'Cloudflare & R2 Storage Settings',
     desc: 'Configure your R2 bucket, API keys, Cloudflare Account ID, and studio credentials.',
@@ -69,6 +83,14 @@ let siteContent = null;
 let photosList = [];
 let activeCategoryFilter = 'All';
 let selectedModalFile = null;
+let heroCutouts = []; // [{ url, alt }] — ordered transparent hero portraits
+let typographyState = { ...DEFAULT_TYPOGRAPHY };
+
+const DEFAULT_CUTOUT_URL = '/assets/hero-couple.png';
+const DEFAULT_CUTOUT_ALT = 'Newlywed couple sharing a tender moment';
+const NEW_CUTOUT_ALT = 'Imagix Photography portrait';
+const CUTOUT_NOT_TRANSPARENT_MSG = 'This image has no transparent background. Please upload a cutout PNG/WebP.';
+const CUTOUT_WRONG_TYPE_MSG = 'Only PNG or WebP cutouts are allowed (JPEG and other formats cannot have a transparent background).';
 
 // ==========================================================================
 // 1. Toast Notification System
@@ -292,12 +314,9 @@ function populateAllForms() {
   setVal('hero-backword', hero.backword);
   setVal('hero-caption', hero.portraitCaption);
 
-  // Cutout preview
-  const cutoutImg = $('#cutout-preview-img');
-  const cutoutLabel = $('#cutout-src-label');
-  const currentCutout = hero.cutoutImage || '/assets/hero-couple.png';
-  if (cutoutImg) cutoutImg.src = currentCutout;
-  if (cutoutLabel) cutoutLabel.textContent = currentCutout;
+  // Cutout portraits (ordered list; legacy single cutoutImage becomes a 1-item list)
+  heroCutouts = normalizeHeroCutouts(hero);
+  renderCutoutManager();
 
   // Hero Stats list
   renderHeroStatsEditor(hero.stats || []);
@@ -369,6 +388,10 @@ function populateAllForms() {
   const footer = siteContent.footer || {};
   setVal('footer-tagline', footer.tagline);
   setVal('footer-copy', footer.copyright);
+
+  // 9. TYPOGRAPHY
+  typographyState = normalizeTypography(siteContent.typography);
+  renderTypographyEditor();
 }
 
 function setVal(id, val) {
@@ -650,6 +673,7 @@ function renderTestimonialsEditor(reviews) {
 
   addBtnWrap.querySelector('#add-review-btn').addEventListener('click', () => {
     if (!siteContent.testimonials) siteContent.testimonials = { list: [] };
+    siteContent.testimonials.list = collectTestimonials(); // keep unsaved typing
     siteContent.testimonials.list.push({
       name: 'NEW CLIENT',
       place: 'COIMBATORE',
@@ -662,6 +686,7 @@ function renderTestimonialsEditor(reviews) {
   container.querySelectorAll('.remove-rev-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx = Number(btn.getAttribute('data-idx'));
+      siteContent.testimonials.list = collectTestimonials(); // keep unsaved typing
       siteContent.testimonials.list.splice(idx, 1);
       renderTestimonialsEditor(siteContent.testimonials.list);
     });
@@ -694,7 +719,14 @@ async function saveAllSiteContent() {
   }
 
   try {
+    const cutoutList = heroCutouts.length
+      ? heroCutouts.map(item => ({ url: item.url, alt: (item.alt || '').trim() || DEFAULT_CUTOUT_ALT }))
+      : [{ url: DEFAULT_CUTOUT_URL, alt: DEFAULT_CUTOUT_ALT }];
+
     const updated = {
+      // Keep any sections this editor does not manage (e.g. gallery) instead of dropping them
+      ...(siteContent || {}),
+      typography: normalizeTypography(typographyState),
       general: {
         ...(siteContent?.general || {}),
         phone: getVal('gen-phone'),
@@ -714,7 +746,9 @@ async function saveAllSiteContent() {
         ctaLink: getVal('hero-cta-link'),
         backword: getVal('hero-backword'),
         portraitCaption: getVal('hero-caption'),
-        cutoutImage: siteContent?.hero?.cutoutImage || '/assets/hero-couple.png',
+        // Ordered portrait list + legacy single field (first portrait) for backward compatibility
+        cutouts: cutoutList,
+        cutoutImage: cutoutList[0].url,
         stats: collectHeroStats(),
       },
       story: {
@@ -859,11 +893,8 @@ function updateLiveMockups() {
   setElemText('pv-hero-backword', backword);
   setElemText('pv-hero-caption', caption);
 
-  // Cutout preview
-  const cutoutImg = $('#pv-cutout-img');
-  if (cutoutImg && siteContent?.hero?.cutoutImage) {
-    cutoutImg.src = siteContent.hero.cutoutImage;
-  }
+  // Cutout preview (first portrait; the mockup gently cycles when there are several)
+  updateCutoutMockup();
 
   // Mockup stats
   const pvStats = $('#pv-hero-stats');
@@ -908,18 +939,215 @@ function setElemText(id, text) {
 }
 
 // ==========================================================================
-// 9. Hero Cutout Manager (Transparent Background Only)
+// 9. Hero Cutout Portraits Manager (Transparent Background Only)
+//    Ordered list `hero.cutouts: [{ url, alt }]` — the client crossfades them.
 // ==========================================================================
+function normalizeHeroCutouts(hero) {
+  const list = Array.isArray(hero?.cutouts)
+    ? hero.cutouts
+        .map(item => (typeof item === 'string' ? { url: item } : item))
+        .filter(item => item && typeof item.url === 'string' && item.url.trim())
+        .map(item => ({ url: item.url.trim(), alt: typeof item.alt === 'string' ? item.alt : DEFAULT_CUTOUT_ALT }))
+    : [];
+  if (list.length) return list;
+  return [{ url: hero?.cutoutImage || DEFAULT_CUTOUT_URL, alt: DEFAULT_CUTOUT_ALT }];
+}
+
+function setCutoutStatus(message, tone = 'info') {
+  const status = $('#cutout-upload-status');
+  if (!status) return;
+  status.textContent = message || '';
+  status.dataset.tone = tone;
+}
+
+function renderCutoutManager() {
+  const list = $('#cutout-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  heroCutouts.forEach((item, idx) => {
+    const li = document.createElement('li');
+    li.className = 'cutout-item';
+    li.dataset.idx = String(idx);
+    li.innerHTML = `
+      <button type="button" class="cutout-handle" title="Drag to reorder" aria-label="Drag portrait ${idx + 1} to reorder">⠿</button>
+      <div class="cutout-thumb checkerboard-bg">
+        <img src="${escapeHtml(item.url)}" alt="" loading="lazy" draggable="false">
+      </div>
+      <div class="cutout-item-body">
+        <div class="cutout-item-top">
+          <span class="cutout-order">${String(idx + 1).padStart(2, '0')}</span>
+          ${idx === 0 ? '<span class="cutout-first-badge">Shown first</span>' : ''}
+          <span class="cutout-url" title="${escapeHtml(item.url)}">${escapeHtml(item.url)}</span>
+        </div>
+        <label for="cutout-alt-${idx}">Alt text (screen readers &amp; SEO)</label>
+        <input type="text" id="cutout-alt-${idx}" class="cutout-alt-input" maxlength="180" value="${escapeHtml(item.alt || '')}" placeholder="Describe the people in this portrait">
+      </div>
+      <div class="cutout-item-actions">
+        <button type="button" class="cutout-btn cutout-up" title="Move earlier" aria-label="Move portrait ${idx + 1} earlier" ${idx === 0 ? 'disabled' : ''}>↑</button>
+        <button type="button" class="cutout-btn cutout-down" title="Move later" aria-label="Move portrait ${idx + 1} later" ${idx === heroCutouts.length - 1 ? 'disabled' : ''}>↓</button>
+        <button type="button" class="cutout-btn cutout-remove" title="Remove from hero" aria-label="Remove portrait ${idx + 1}">✕</button>
+      </div>
+    `;
+
+    li.querySelector('.cutout-alt-input')?.addEventListener('input', e => {
+      heroCutouts[idx].alt = e.target.value;
+    });
+    li.querySelector('.cutout-up')?.addEventListener('click', () => moveCutout(idx, idx - 1));
+    li.querySelector('.cutout-down')?.addEventListener('click', () => moveCutout(idx, idx + 1));
+    li.querySelector('.cutout-remove')?.addEventListener('click', () => removeCutout(idx));
+
+    // Drag-to-reorder (only armed from the handle so text selection in inputs still works)
+    const handle = li.querySelector('.cutout-handle');
+    handle?.addEventListener('pointerdown', () => { li.draggable = true; });
+    handle?.addEventListener('pointerup', () => { li.draggable = false; });
+    li.addEventListener('dragstart', e => {
+      if (!li.draggable) return;
+      li.classList.add('is-dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-imagix-cutout', String(idx));
+    });
+    li.addEventListener('dragend', () => {
+      li.draggable = false;
+      li.classList.remove('is-dragging');
+      list.querySelectorAll('.is-drop-target').forEach(el => el.classList.remove('is-drop-target'));
+    });
+    li.addEventListener('dragover', e => {
+      if (!e.dataTransfer.types.includes('application/x-imagix-cutout')) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      li.classList.add('is-drop-target');
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('is-drop-target'));
+    li.addEventListener('drop', e => {
+      const from = e.dataTransfer.getData('application/x-imagix-cutout');
+      if (from === '') return;
+      e.preventDefault();
+      li.classList.remove('is-drop-target');
+      moveCutout(Number(from), idx);
+    });
+
+    list.appendChild(li);
+  });
+
+  const count = $('#cutout-count');
+  if (count) {
+    count.textContent = heroCutouts.length === 1
+      ? '1 portrait · shown still'
+      : `${heroCutouts.length} portraits · crossfade every ~6s`;
+  }
+  updateCutoutMockup();
+}
+
+function moveCutout(from, to) {
+  if (from === to || from < 0 || to < 0 || from >= heroCutouts.length || to >= heroCutouts.length) return;
+  const [item] = heroCutouts.splice(from, 1);
+  heroCutouts.splice(to, 0, item);
+  renderCutoutManager();
+  setCutoutStatus('Order updated — press Save Changes to publish it.', 'info');
+  // keep keyboard focus on the moved row's matching button for quick repeated moves
+  const row = $(`#cutout-list .cutout-item[data-idx="${to}"]`);
+  (row?.querySelector(to < from ? '.cutout-up' : '.cutout-down') || row?.querySelector('.cutout-handle'))?.focus();
+}
+
+function removeCutout(idx) {
+  if (heroCutouts.length <= 1) {
+    toast('The hero needs at least one portrait. Add another before removing this one.', 'danger');
+    return;
+  }
+  if (!confirm('Remove this portrait from the hero rotation?\n\n(The file stays in storage; press Save Changes to publish.)')) return;
+  heroCutouts.splice(idx, 1);
+  renderCutoutManager();
+  setCutoutStatus('Portrait removed — press Save Changes to publish it.', 'info');
+}
+
+let cutoutMockupTimer = null;
+let cutoutMockupIndex = 0;
+let cutoutMockupSignature = '';
+function updateCutoutMockup() {
+  const img = $('#pv-cutout-img');
+  const badge = $('#pv-cutout-count');
+  if (!img) return;
+  const urls = heroCutouts.map(item => item.url);
+  const signature = urls.join('\n');
+  if (signature === cutoutMockupSignature) return; // nothing changed (e.g. typing in other fields)
+  cutoutMockupSignature = signature;
+  clearInterval(cutoutMockupTimer);
+  cutoutMockupIndex = 0;
+  img.classList.remove('is-fading');
+  if (urls[0] && img.getAttribute('src') !== urls[0]) img.src = urls[0];
+  if (badge) {
+    badge.hidden = urls.length < 2;
+    badge.textContent = `${urls.length} portraits`;
+  }
+  if (urls.length < 2) return;
+  cutoutMockupTimer = setInterval(() => {
+    if (document.hidden) return;
+    cutoutMockupIndex = (cutoutMockupIndex + 1) % urls.length;
+    img.classList.add('is-fading');
+    setTimeout(() => {
+      img.src = urls[cutoutMockupIndex];
+      img.classList.remove('is-fading');
+    }, 420);
+  }, 3200);
+}
+
+function isAllowedCutoutType(file) {
+  const type = String(file.type || '').toLowerCase();
+  if (type === 'image/png' || type === 'image/webp') return true;
+  return (!type || type === 'application/octet-stream') && /\.(png|webp)$/i.test(file.name || '');
+}
+
+// Draws the image to a canvas and measures how much of it is see-through.
+// A real cutout has a meaningful share (≥ 1%) of pixels with alpha < 250.
+function analyzeCutoutTransparency(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight));
+        const width = Math.max(1, Math.round(img.naturalWidth * scale));
+        const height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        const data = ctx.getImageData(0, 0, width, height).data;
+        let seeThrough = 0;
+        for (let i = 3; i < data.length; i += 4) {
+          if (data[i] < 250) seeThrough += 1;
+        }
+        const ratio = seeThrough / (width * height);
+        resolve({ ratio, transparent: ratio >= 0.01, width: img.naturalWidth, height: img.naturalHeight });
+      } catch (err) {
+        reject(new Error('Could not inspect this image for transparency.'));
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Could not read this image file.'));
+    };
+    img.src = url;
+  });
+}
+
 function setupHeroCutoutUploader() {
   const dropzone = $('#cutout-dropzone');
   const fileInput = $('#cutout-file-input');
   const resetBtn = $('#reset-cutout-btn');
-  const status = $('#cutout-upload-status');
 
   if (!dropzone || !fileInput) return;
 
+  const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files');
+
   ['dragenter', 'dragover'].forEach(name => {
     dropzone.addEventListener(name, e => {
+      if (!hasFiles(e)) return;
       e.preventDefault();
       dropzone.classList.add('dragging');
     });
@@ -933,134 +1161,196 @@ function setupHeroCutoutUploader() {
   });
 
   dropzone.addEventListener('drop', e => {
-    const files = e.dataTransfer.files;
-    if (files && files.length) handleCutoutFile(files[0]);
+    const files = e.dataTransfer?.files;
+    if (files && files.length) handleCutoutFiles(files);
   });
 
   fileInput.addEventListener('change', () => {
     if (fileInput.files && fileInput.files.length) {
-      handleCutoutFile(fileInput.files[0]);
+      const files = Array.from(fileInput.files);
       fileInput.value = '';
+      handleCutoutFiles(files);
     }
   });
 
   resetBtn?.addEventListener('click', async () => {
-    if (!confirm('Reset hero cutout portrait back to the default couple image?')) return;
+    if (!confirm('Reset the hero back to the single default couple portrait?')) return;
     try {
-      if (!siteContent.hero) siteContent.hero = {};
-      siteContent.hero.cutoutImage = '/assets/hero-couple.png';
-
-      const cutoutImg = $('#cutout-preview-img');
-      const pvCutout = $('#pv-cutout-img');
-      const cutoutLabel = $('#cutout-src-label');
-
-      if (cutoutImg) cutoutImg.src = '/assets/hero-couple.png';
-      if (pvCutout) pvCutout.src = '/assets/hero-couple.png';
-      if (cutoutLabel) cutoutLabel.textContent = '/assets/hero-couple.png';
-
+      heroCutouts = [{ url: DEFAULT_CUTOUT_URL, alt: DEFAULT_CUTOUT_ALT }];
+      renderCutoutManager();
       await saveAllSiteContent();
+      setCutoutStatus('Hero reset to the default portrait.', 'success');
       toast('Hero cutout reset to default.', 'success');
     } catch (err) {
       toast(`Reset failed: ${err.message}`, 'danger');
     }
   });
+}
 
-  async function handleCutoutFile(file) {
-    if (!status) return;
+async function handleCutoutFiles(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
 
-    // Check mime type: transparent PNG or WebP only
-    if (!['image/png', 'image/webp'].includes(file.type)) {
-      status.textContent = '❌ Please upload a PNG or WebP transparent cutout image.';
-      toast('Hero cutout must be a transparent PNG or WebP image.', 'danger');
-      return;
+  const added = [];
+  const rejected = [];
+
+  for (let i = 0; i < files.length; i += 1) {
+    const file = files[i];
+    const label = files.length > 1 ? ` (${i + 1}/${files.length})` : '';
+
+    if (!isAllowedCutoutType(file)) {
+      rejected.push({ name: file.name, reason: CUTOUT_WRONG_TYPE_MSG });
+      continue;
     }
 
-    status.textContent = 'Inspecting transparency…';
-
+    setCutoutStatus(`Checking transparency of ${file.name}${label}…`, 'info');
+    let report;
     try {
-      // Transparency check via canvas
-      const hasAlpha = await checkImageTransparency(file);
-      if (!hasAlpha) {
-        const proceed = confirm(
-          'Notice: This image appears to have an opaque/solid background.\n\nFor the best visual depth in front of the IMAGIX typography, an image with background removed (transparent cutout) is recommended.\n\nDo you still wish to proceed with this image?'
-        );
-        if (!proceed) {
-          status.textContent = 'Upload cancelled. Use a transparent cutout.';
-          return;
-        }
-      }
-
-      status.textContent = 'Uploading hero cutout to storage…';
-
-      const form = new FormData();
-      form.append('image', file);
-
-      const res = await api('/api/hero-image', {
-        method: 'POST',
-        body: form,
-      });
-
-      const newUrl = res.url;
-      if (!siteContent.hero) siteContent.hero = {};
-      siteContent.hero.cutoutImage = newUrl;
-
-      const cutoutImg = $('#cutout-preview-img');
-      const pvCutout = $('#pv-cutout-img');
-      const cutoutLabel = $('#cutout-src-label');
-
-      if (cutoutImg) cutoutImg.src = newUrl;
-      if (pvCutout) pvCutout.src = newUrl;
-      if (cutoutLabel) cutoutLabel.textContent = newUrl;
-
-      // Automatically save content so the change is persisted
-      await saveAllSiteContent();
-
-      status.textContent = '✓ Hero cutout updated and live!';
-      toast('Hero cutout portrait updated! Immediate preview active.', 'success');
+      report = await analyzeCutoutTransparency(file);
     } catch (err) {
-      status.textContent = `❌ ${err.message}`;
-      toast(`Cutout upload error: ${err.message}`, 'danger');
+      rejected.push({ name: file.name, reason: err.message });
+      continue;
     }
+    if (!report.transparent) {
+      rejected.push({ name: file.name, reason: CUTOUT_NOT_TRANSPARENT_MSG });
+      continue;
+    }
+
+    setCutoutStatus(`Uploading ${file.name}${label} to storage…`, 'info');
+    try {
+      const form = new FormData();
+      form.append('image', file, file.name);
+      form.append('updateContent', 'false'); // the ordered list is saved below
+      const res = await api('/api/hero-image', { method: 'POST', body: form });
+      heroCutouts.push({ url: res.url, alt: NEW_CUTOUT_ALT });
+      added.push(file.name);
+      renderCutoutManager();
+    } catch (err) {
+      rejected.push({ name: file.name, reason: err.message });
+    }
+  }
+
+  if (added.length) {
+    // Persist right away (same as the original single-cutout uploader)
+    await saveAllSiteContent();
+  }
+
+  rejected.forEach(item => toast(`${item.name}: ${item.reason}`, 'danger', 6000));
+
+  if (added.length && !rejected.length) {
+    setCutoutStatus(`✓ ${added.length} portrait${added.length > 1 ? 's' : ''} added and published.`, 'success');
+  } else if (added.length && rejected.length) {
+    setCutoutStatus(`✓ ${added.length} added · ✕ ${rejected.length} rejected — ${rejected[0].reason}`, 'danger');
+  } else if (rejected.length) {
+    setCutoutStatus(`✕ ${rejected.length > 1 ? `${rejected.length} files rejected — ` : ''}${rejected[0].reason}`, 'danger');
   }
 }
 
-// Canvas helper to check if image contains transparent pixels
-function checkImageTransparency(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
+// ==========================================================================
+// 9b. Website Typography (fonts for the whole client site)
+// ==========================================================================
+const loadedPreviewFonts = new Set();
+const ROLE_GROUP_LABELS = {
+  serif: 'Classic & Roman serif',
+  sans: 'Clean sans-serif',
+  display: 'Bold display',
+  script: 'Script & handwriting',
+};
 
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const w = (canvas.width = Math.min(200, img.naturalWidth));
-        const h = (canvas.height = Math.min(200, img.naturalHeight));
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
+function ensurePreviewFont(family) {
+  const font = findFont(family);
+  if (!font || loadedPreviewFonts.has(font.family)) return Promise.resolve();
+  loadedPreviewFonts.add(font.family);
+  return new Promise(resolve => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = googleFontsHref([font.family]);
+    link.dataset.previewFont = font.family;
+    link.onload = resolve;
+    link.onerror = resolve;
+    document.head.appendChild(link);
+  });
+}
 
-        const data = ctx.getImageData(0, 0, w, h).data;
-        URL.revokeObjectURL(url);
+function renderTypographyEditor() {
+  const wrap = $('#type-roles');
+  if (!wrap) return;
+  wrap.innerHTML = '';
 
-        // Check if any pixels have alpha < 250
-        for (let i = 3; i < data.length; i += 4) {
-          if (data[i] < 240) {
-            resolve(true); // Has transparent areas
-            return;
-          }
-        }
-        resolve(false); // Entire image is solid opaque
-      } catch (e) {
-        URL.revokeObjectURL(url);
-        resolve(true); // Pass if canvas read fails
-      }
-    };
+  FONT_ROLES.forEach(role => {
+    const options = fontsForRole(role.key);
+    const groups = {};
+    options.forEach(font => {
+      (groups[font.category] = groups[font.category] || []).push(font);
+    });
 
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Could not load image file for validation.'));
-    };
+    const optionHtml = Object.keys(ROLE_GROUP_LABELS)
+      .filter(cat => groups[cat])
+      .map(cat => `
+        <optgroup label="${escapeHtml(ROLE_GROUP_LABELS[cat])}">
+          ${groups[cat].map(font => `<option value="${escapeHtml(font.family)}">${escapeHtml(font.family)}${font.family === role.defaultFamily ? ' (current default)' : ''} — ${escapeHtml(font.note)}</option>`).join('')}
+        </optgroup>`)
+      .join('');
 
-    img.src = url;
+    const row = document.createElement('div');
+    row.className = 'type-role';
+    row.dataset.role = role.key;
+    row.innerHTML = `
+      <div class="type-role-head">
+        <label for="type-${role.key}">${escapeHtml(role.label)}</label>
+        <span class="type-default-chip">Default: ${escapeHtml(role.defaultFamily)}</span>
+      </div>
+      <p class="type-role-usage">${escapeHtml(role.usage)}</p>
+      <select id="type-${role.key}" class="type-select" data-role="${role.key}">${optionHtml}</select>
+      <div class="type-sample type-sample-${role.key}" aria-hidden="true">${escapeHtml(role.sample)}</div>
+    `;
+    wrap.appendChild(row);
+
+    const select = row.querySelector('select');
+    select.value = typographyState[role.key];
+    select.addEventListener('change', () => {
+      typographyState[role.key] = select.value;
+      applyTypographyPreview();
+      const status = $('#type-status');
+      if (status) status.textContent = 'Unsaved — press Save Changes to publish.';
+    });
+  });
+
+  applyTypographyPreview();
+}
+
+function applyTypographyPreview() {
+  const typo = normalizeTypography(typographyState);
+  FONT_ROLES.forEach(role => {
+    const family = typo[role.key];
+    const stack = fontStack(role.key, family);
+    const sample = $(`#type-roles .type-sample-${role.key}`);
+    if (sample) sample.classList.add('is-loading');
+    ensurePreviewFont(family).then(() =>
+      document.fonts?.load ? document.fonts.load(`400 24px '${family}'`).catch(() => {}) : null
+    ).finally(() => {
+      if (sample) sample.classList.remove('is-loading');
+    });
+    if (sample) sample.style.fontFamily = stack;
+    $$(`#mockup-type [data-type-role="${role.key}"]`).forEach(el => {
+      el.style.fontFamily = stack;
+    });
+  });
+
+  // Use the studio's real copy in the preview where possible
+  setElemText('pv-type-display', getVal('hero-line1') || 'MOMENTS TODAY.');
+  setElemText('pv-type-heading', getVal('story-title-lead') || 'Life happens in the in-between.');
+  setElemText('pv-type-heading-em', getVal('story-title-accent') || 'That’s where we look.');
+  const body = getVal('story-p1');
+  if (body) setElemText('pv-type-body', body);
+}
+
+function setupTypographyEditor() {
+  $('#type-reset-btn')?.addEventListener('click', () => {
+    typographyState = { ...DEFAULT_TYPOGRAPHY };
+    renderTypographyEditor();
+    const status = $('#type-status');
+    if (status) status.textContent = 'Defaults restored — press Save Changes to publish.';
   });
 }
 
@@ -1670,6 +1960,7 @@ function initAdminApp() {
     setupTabNavigation();
     setupLivePreviewListeners();
     setupHeroCutoutUploader();
+    setupTypographyEditor();
     setupCategoryFilters();
     setupPhotoModal();
     setupResponsivePreview();

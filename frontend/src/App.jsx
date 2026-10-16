@@ -21,13 +21,41 @@ import WhatsAppButton from './components/WhatsAppButton';
 
 import { FALLBACK_PHOTOS } from './data/photographyData';
 import { DEFAULT_CONTENT } from './data/defaultSiteContent';
+import { applyTypography } from './lib/typography';
 import './styles.css';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
+// Last published CMS content, so a reload paints the studio's real copy, hero
+// portraits and fonts immediately instead of flashing the built-in defaults.
+const CONTENT_CACHE_KEY = 'imagix-content-cache-v1';
+
+function readCachedContent() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CONTENT_CACHE_KEY) || 'null');
+    return cached && typeof cached === 'object' && !Array.isArray(cached) ? cached : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedContent(content) {
+  try {
+    const next = JSON.stringify(content);
+    // Only write real changes (avoids needless cross-tab `storage` events)
+    if (localStorage.getItem(CONTENT_CACHE_KEY) !== next) localStorage.setItem(CONTENT_CACHE_KEY, next);
+  } catch {
+    // Storage might be disabled or full
+  }
+}
+
 export default function App() {
   const rootRef = useRef(null);
-  const [content, setContent] = useState(DEFAULT_CONTENT);
+  const [initialCache] = useState(readCachedContent);
+  const [content, setContent] = useState(() => initialCache || DEFAULT_CONTENT);
+  // True once content is known to be the studio's (from cache or the API), so we
+  // never wipe admin-chosen fonts with the defaults during the first render.
+  const [contentKnown, setContentKnown] = useState(() => Boolean(initialCache));
   const [photos, setPhotos] = useState(FALLBACK_PHOTOS);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
@@ -75,12 +103,29 @@ export default function App() {
       .then((data) => {
         if (data?.content) {
           setContent(data.content);
+          setContentKnown(true);
+          writeCachedContent(data.content);
         }
       })
       .catch(() => {
         // Fall back to default content
       });
   }, []);
+
+  // Admin-controlled typography (content.typography) — applied site-wide via CSS variables
+  const typographyKey = JSON.stringify(content?.typography || null);
+  useEffect(() => {
+    if (!contentKnown) return undefined;
+    let cancelled = false;
+    applyTypography(content?.typography).then((changed) => {
+      if (!cancelled && changed) ScrollTrigger.refresh();
+    });
+    return () => {
+      cancelled = true;
+    };
+    // typographyKey tracks the actual font choice, not the object identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typographyKey, contentKnown]);
 
   useEffect(() => {
     loadContent();
